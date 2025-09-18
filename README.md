@@ -28,7 +28,7 @@ This repository is a framework that uses a VLA model as a backbone to improve su
 
     - Listing the available tasks:
 
-        Note: It the task name changes, it may be necessary to update the search pattern `"Template-"`
+        Note: It the task name changes, it may be necessary to update the search pattern `"VlaLab-"`
         (in the `scripts/list_envs.py` file) so that it can be listed.
 
         ```bash
