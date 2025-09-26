@@ -118,21 +118,21 @@ class ForgeTaskNutThreadGr00tCfg(ForgeGr00tEnvCfg):
 
 ################# GR00T Demo Save Env ##################
 @configclass
-class ForgeTaskPegInsertGr00tSaveDemoCfg(ForgeTaskPegInsertGr00tCfg):
+class ForgeTaskPegInsertGr00tDemoSaveCfg(ForgeTaskPegInsertGr00tCfg):
     episode_length_s = 6.0
     is_demo_save: bool = True
     demo_save_cfg: DemoSavePegInsert = DemoSavePegInsert()
 
 
 @configclass
-class ForgeTaskGearMeshGr00tSaveDemoCfg(ForgeTaskGearMeshGr00tCfg):
+class ForgeTaskGearMeshGr00tDemoSaveCfg(ForgeTaskGearMeshGr00tCfg):
     episode_length_s = 10.0
     is_demo_save: bool = True
     demo_save_cfg: DemoSaveGearMesh = DemoSaveGearMesh()
 
 
 @configclass
-class ForgeTaskNutThreadGr00tSaveDemoCfg(ForgeTaskNutThreadGr00tCfg):
+class ForgeTaskNutThreadGr00tDemoSaveCfg(ForgeTaskNutThreadGr00tCfg):
     episode_length_s = 8.0
     is_demo_save: bool = True
     demo_save_cfg: DemoSaveNutThread = DemoSaveNutThread()

@@ -12,6 +12,7 @@ import isaacsim.core.utils.torch as torch_utils
 import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from vla_lab.envs import DirectRLGr00tNotParallelEnv
+from isaaclab.envs import DirectRLEnv
 from isaaclab.sim.spawners.from_files import GroundPlaneCfg, spawn_ground_plane
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 from isaaclab.utils.math import axis_angle_from_quat
@@ -20,7 +21,7 @@ from vla_lab.tasks.direct.base_line.factory import factory_control, factory_util
 from vla_lab.tasks.direct.base_line.factory.factory_env_cfg import OBS_DIM_CFG, STATE_DIM_CFG, FactoryEnvCfg
 
 
-class FactoryEnv(DirectRLGr00tNotParallelEnv):
+class FactoryEnv(DirectRLEnv):
     cfg: FactoryEnvCfg
 
     def __init__(self, cfg: FactoryEnvCfg, render_mode: str | None = None, **kwargs):

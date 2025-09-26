@@ -80,8 +80,13 @@ class ForgeGr00tNotParallelEnv(ForgeEnv):
         )
 
         rew_buf = torch.where(true_successes, 1.0, 0.0)
-        # TODO: Add force limit penalty
 
+        force = self.get_ft_force()[1]
+        force_mag = torch.norm(force, dim=1)
+        force_penalty = torch.where(force_mag > 0.2, -0.1, 0.0)
+
+        rew_buf = force_penalty + rew_buf
+        
         # Log Reward
         wandb.log({
             "success_rate": true_successes.sum().item() / self.num_envs,

@@ -5,10 +5,6 @@
 import numpy as np
 import torch
 
-import isaacsim.core.utils.torch as torch_utils
-
-from isaaclab.utils.math import axis_angle_from_quat
-
 from vla_lab.tasks.direct.base_line.factory import factory_utils
 from vla_lab.tasks.direct.base_line.forge import forge_utils
 from vla_lab.tasks.direct.base_line.forge.forge_env import ForgeEnv
@@ -18,13 +14,11 @@ import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.sim.spawners.from_files import GroundPlaneCfg, spawn_ground_plane
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
-from isaaclab.utils.math import axis_angle_from_quat, matrix_from_quat
 
-from isaaclab.sensors import TiledCamera, TiledCameraCfg, save_images_to_file
+from isaaclab.sensors import TiledCamera
 import wandb
 import time
 import os
-from torchvision.utils import make_grid, save_image
 import pandas as pd
 import sys
 from torchvision.io import write_video
@@ -177,38 +171,6 @@ class ForgeGr00tDemoSaveEnv(ForgeEnv):
         }
         return observations
 
-    def save_images(self, camera, data_type, save_dir, folder_name):
-        
-        current_save_path = os.path.join(save_dir, folder_name)
-        os.makedirs(current_save_path, exist_ok=True) # 폴더 없으면 생성
-
-        # 강화학습 스텝 번호 가져오기 (안전하게)
-        try:
-            episode_lengths_tensor = self.episode_length_buf
-        except AttributeError:
-            print("Warning: env.episode_length_buf not found. Using step 0 for all environments.")
-            episode_lengths_tensor = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
-
-        if data_type == "rgb":
-            camera_data = camera.data.output[data_type] / 255.0
-            mean_tensor = torch.mean(camera_data, dim=(1, 2), keepdim=True)
-            camera_data -= mean_tensor
-        elif data_type == "depth":
-            camera_data = camera.data.output[data_type]
-            camera_data[camera_data == float("inf")] = 0
-
-        for i, img_data in enumerate(camera_data):
-            
-            step = episode_lengths_tensor[i].item()
-
-            filename = f"env{i:04d}_step{step:04d}.png"
-            filepath = os.path.join(current_save_path, filename)
-
-            img_data = img_data.permute(2, 0, 1)
-
-            save_image(img_data, filepath)
-
-
     def _initialize_parquet_buffers(self):
         """Clears and initializes the data buffer for a specific environment."""
         for env_id in range(self.num_envs):
@@ -262,7 +224,7 @@ class ForgeGr00tDemoSaveEnv(ForgeEnv):
                 )
                 os.makedirs(os.path.dirname(gr00t_video_path), exist_ok=True)
 
-                write_video(gr00t_video_path, img_tensor, fps=1/self.step_dt, video_codec="h264")
+                write_video(gr00t_video_path, img_tensor, fps=int(1/self.step_dt), video_codec="h264")
 
 
         print(f"Saved {self.num_envs} episodes to {data_dir} and {video_dir}")

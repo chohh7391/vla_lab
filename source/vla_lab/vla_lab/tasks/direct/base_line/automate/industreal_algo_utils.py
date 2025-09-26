@@ -371,4 +371,4 @@ def get_interpen_dist(
         # If signed distance is negative
         if signed_dist < 0.0:
             # Store interpenetration distance
-            interpen_dists[tid] = signed_dist
+            interpen_dists[tid] = signed_dist   
