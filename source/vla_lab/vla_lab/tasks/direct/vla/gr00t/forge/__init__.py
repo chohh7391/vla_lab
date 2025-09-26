@@ -7,10 +7,6 @@ import gymnasium as gym
 
 from . import agents
 
-from .forge_gr00t_env import ForgeGr00tEnv
-from .forge_gr00t_demo_save_env import ForgeGr00tDemoSaveEnv
-from .forge_gr00t_not_parallel_env import ForgeGr00tNotParallelEnv
-
 ##
 # Register Gym environments.
 ##
@@ -50,7 +46,7 @@ gym.register(
     entry_point=f"{__name__}.forge_gr00t_demo_save_env:ForgeGr00tDemoSaveEnv",
     disable_env_checker=True,
     kwargs={
-        "env_cfg_entry_point": f"{__name__}.forge_gr00t_env_cfg:ForgeTaskPegInsertGr00tSaveDemoCfg",
+        "env_cfg_entry_point": f"{__name__}.forge_gr00t_env_cfg:ForgeTaskPegInsertGr00tDemoSaveCfg",
         "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg_peg_insert.yaml",
     },
 )
@@ -59,7 +55,7 @@ gym.register(
     entry_point=f"{__name__}.forge_gr00t_demo_save_env:ForgeGr00tDemoSaveEnv",
     disable_env_checker=True,
     kwargs={
-        "env_cfg_entry_point": f"{__name__}.forge_gr00t_env_cfg:ForgeTaskGearMeshGr00tSaveDemoCfg",
+        "env_cfg_entry_point": f"{__name__}.forge_gr00t_env_cfg:ForgeTaskGearMeshGr00tDemoSaveCfg",
         "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg_gear_mesh.yaml",
     },
 )
@@ -68,7 +64,7 @@ gym.register(
     entry_point=f"{__name__}.forge_gr00t_demo_save_env:ForgeGr00tDemoSaveEnv",
     disable_env_checker=True,
     kwargs={
-        "env_cfg_entry_point": f"{__name__}.forge_gr00t_env_cfg:ForgeTaskNutThreadGr00tSaveDemoCfg",
+        "env_cfg_entry_point": f"{__name__}.forge_gr00t_env_cfg:ForgeTaskNutThreadGr00tDemoSaveCfg",
         "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg_nut_thread.yaml",
     },
 )

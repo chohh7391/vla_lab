@@ -38,7 +38,7 @@ class ForgeGr00tDemoSaveEnv(ForgeEnv):
         super().__init__(cfg, render_mode, **kwargs)
 
         if wandb.run is None:
-            wandb.init(project=f"vla-rl-{self.cfg.task.name}", name=time.strftime('%m%d-%H:%M:%S'))
+            wandb.init(project=f"vla-rl-forge-{cfg.task_name}", name=time.strftime('%m%d-%H:%M:%S'))
 
         self.demo_save_cfg = self.cfg.demo_save_cfg
 
