@@ -167,7 +167,7 @@ python scripts/rl_games/play.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Demo-Sav
 - Install Isaac-GR00T
 
 ```
-cd 
+cd ~/
 
 git clone https://github.com/NVIDIA/Isaac-GR00T.git
 ```
