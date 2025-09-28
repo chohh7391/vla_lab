@@ -184,6 +184,15 @@ pip install --no-build-isolation flash-attn==2.7.1.post4
 ```
 
 - Replace the files at Isaac-GR00T/gr00t/data/embodiment_tags.py and Isaac-GR00T/gr00t/experiment/data_config.py with the files from the gr00t folder within the repository.
+  
+- change meta folder in dataset like ~/vla_lab/gr00t/meta
+
+- take care three things
+  - 1st: In `episodes.jsonl`, edit "tasks" except "valid". And edit "length" to your total_frames
+  - 2nd: In `info.json`, edit "total_episodes" and "total_frames"
+  - 3rd: Change stats.json file using `vla_lab/gr00t/utils/get_stats.py`
+  - 4th: In `tasks.jsonl`, edit "task" at "task_index": 0
+
 
 - Train gr00t model
 
