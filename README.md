@@ -174,6 +174,14 @@ git clone https://github.com/NVIDIA/Isaac-GR00T.git
 
 - install dependencies
 
+```
+cd Isaac-GR00T
+conda create -n gr00t python=3.10
+conda activate gr00t
+pip install --upgrade setuptools
+pip install -e .[base]
+pip install --no-build-isolation flash-attn==2.7.1.post4 
+```
 
 - Replace the files at Isaac-GR00T/gr00t/data/embodiment_tags.py and Isaac-GR00T/gr00t/experiment/data_config.py with the files from the gr00t folder within the repository.
 
