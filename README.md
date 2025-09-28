@@ -183,9 +183,9 @@ pip install -e .[base]
 pip install --no-build-isolation flash-attn==2.7.1.post4 
 ```
 
-- Replace the files at Isaac-GR00T/gr00t/data/embodiment_tags.py and Isaac-GR00T/gr00t/experiment/data_config.py with the files from the gr00t folder within the repository.
+- Replace the files at `Isaac-GR00T/gr00t/data/embodiment_tags.py` and `Isaac-GR00T/gr00t/experiment/data_config.py` with the files from the gr00t folder within the repository.
   
-- change meta folder in dataset like ~/vla_lab/gr00t/meta
+- change meta folder in dataset like `~/vla_lab/gr00t/meta`
 
 - take care three things
   - 1st: In `episodes.jsonl`, edit "tasks" except "valid". And edit "length" to your total_frames
