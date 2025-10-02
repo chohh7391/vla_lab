@@ -202,7 +202,7 @@ python scripts/gr00t_finetune.py \
    --num-gpus 1 \
    --batch-size 32 \
    --output-dir <OUTPUT_DIR>  \
-   --max-steps 10000 \
+   --max-steps 20000 \
    --data-config franka_triple_cam \
    --video-backend torchvision_av
 ```
