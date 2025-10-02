@@ -14,6 +14,8 @@
 # limitations under the License.
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Optional
 
 from gr00t.data.dataset import ModalityConfig
 from gr00t.data.transform.base import ComposedModalityTransform, ModalityTransform
@@ -33,14 +35,113 @@ from gr00t.data.transform.video import (
 from gr00t.model.transforms import GR00TTransform
 
 
+@dataclass
 class BaseDataConfig(ABC):
-    @abstractmethod
     def modality_config(self) -> dict[str, ModalityConfig]:
-        pass
+        video_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.video_keys,
+        )
+        state_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.state_keys,
+        )
+        action_modality = ModalityConfig(
+            delta_indices=self.action_indices,
+            modality_keys=self.action_keys,
+        )
+        language_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.language_keys,
+        )
+        return {
+            "video": video_modality,
+            "state": state_modality,
+            "action": action_modality,
+            "language": language_modality,
+        }
 
     @abstractmethod
     def transform(self) -> ModalityTransform:
         pass
+
+
+#####################################################################################
+# helper functions
+#####################################################################################
+
+
+def import_external_data_config(data_config_str: str) -> Optional[BaseDataConfig]:
+    """
+    Import and instantiate an external data configuration class.
+
+    Format: "module_path:ClassName" (e.g., "my_configs:RobotConfig")
+    Supports nested modules like "package.submodule:ClassName"
+    """
+    if ":" not in data_config_str:
+        return None
+
+    import importlib
+    import os
+    import sys
+    from pathlib import Path
+
+    # Add current working directory to Python path
+    current_dir = str(Path(os.getcwd()).absolute())
+    if current_dir not in sys.path:
+        sys.path.insert(0, current_dir)
+
+    try:
+        module_path, class_name = data_config_str.split(":", 1)
+        if not module_path or not class_name:
+            raise ValueError(f"Invalid format: '{data_config_str}'. Use 'module:ClassName'")
+
+        print(f"Loading external config: {module_path}.{class_name}")
+
+        module = importlib.import_module(module_path)
+        if not hasattr(module, class_name):
+            available = [
+                n
+                for n in dir(module)
+                if not n.startswith("_") and isinstance(getattr(module, n), type)
+            ]
+            raise AttributeError(
+                f"Class '{class_name}' not found in '{module_path}'. Available: {available}"
+            )
+
+        # assert if the class has 'transform' and 'modality_config' methods
+        if not hasattr(getattr(module, class_name), "transform"):
+            raise AttributeError(f"Class '{class_name}' does not have a 'transform' method")
+        if not hasattr(getattr(module, class_name), "modality_config"):
+            raise AttributeError(f"Class '{class_name}' does not have a 'modality_config' method")
+
+        return getattr(module, class_name)()
+
+    except (ModuleNotFoundError, AttributeError, ValueError) as e:
+        print(f"Config loading failed: {e}")
+        print("Example: my_configs:MyConfig, package.submodule:ClassName")
+        raise
+
+
+def load_data_config(data_config_str: str) -> BaseDataConfig:
+    """
+    Get a data config class from a string.
+    >>> load_data_config("so100")
+    >>> get_data_config("dir.subdir.my_configs:RobotConfig")
+    """
+    if data_config_str in DATA_CONFIG_MAP:
+        return DATA_CONFIG_MAP[data_config_str]
+    data_config_cls = import_external_data_config(data_config_str)
+    if data_config_cls is not None:
+        return data_config_cls
+    # Yellow warning color
+    yellow = "\033[93m"
+    reset = "\033[0m"
+    raise ValueError(
+        f"{yellow}Invalid data_config '{data_config_str}'. "
+        f"Available options: {list(DATA_CONFIG_MAP.keys())}, "
+        f"or use 'module:ClassName' for external configs{reset}"
+    )
 
 
 ###########################################################################################
