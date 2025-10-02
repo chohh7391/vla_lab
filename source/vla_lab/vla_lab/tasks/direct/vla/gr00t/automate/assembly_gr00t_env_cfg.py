@@ -100,7 +100,7 @@ class AssemblyEnvCfg(DirectRLEnvCfg):
         ),
     )
 
-    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=128, env_spacing=2.0)
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
 
     robot = ArticulationCfg(
         prim_path="/World/envs/env_.*/Robot",
@@ -221,6 +221,7 @@ class AutomateTaskAssemblyGr00tCfg(AssemblyEnvCfg):
 ################# GR00T Demo Save Env ##################
 @configclass
 class AutomateTaskAssemblyGr00tDemoSaveCfg(AssemblyEnvCfg):
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=128, env_spacing=2.0)
     episode_length_s = 6.0 # TODO: Edit episode_length_s
     is_demo_save: bool = True
     demo_save_cfg: DemoSaveAssembly = DemoSaveAssembly()
