@@ -244,7 +244,7 @@ class FactoryTaskGearMeshGr00tDemoSaveCfg(FactoryTaskGearMeshGr00tCfg):
 
 @configclass
 class FactoryTaskNutThreadGr00tDemoSaveCfg(FactoryTaskNutThreadGr00tCfg):
-    episode_length_s = 8.0
+    episode_length_s = 10.0
     is_demo_save: bool = True
     demo_save_cfg: DemoSaveNutThread = DemoSaveNutThread()
 
