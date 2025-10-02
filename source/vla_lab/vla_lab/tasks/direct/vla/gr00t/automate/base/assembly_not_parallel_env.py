@@ -23,7 +23,7 @@ from vla_lab.tasks.direct.base_line.automate import automate_log_utils as automa
 from vla_lab.tasks.direct.base_line.automate import factory_control as fc
 from vla_lab.tasks.direct.base_line.automate import industreal_algo_utils as industreal_algo
 from vla_lab.tasks.direct.base_line.automate.assembly_env_cfg import OBS_DIM_CFG, STATE_DIM_CFG
-from source.vla_lab.vla_lab.tasks.direct.vla.gr00t.automate.assembly_gr00t_env_cfg import AssemblyEnvCfg
+from vla_lab.tasks.direct.vla.gr00t.automate.assembly_gr00t_env_cfg import AssemblyEnvCfg
 from vla_lab.tasks.direct.base_line.automate.soft_dtw_cuda import SoftDTW
 from vla_lab.envs import DirectRLGr00tNotParallelEnv
 
