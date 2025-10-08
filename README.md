@@ -203,6 +203,7 @@ python scripts/gr00t_finetune.py \
    --batch-size 32 \
    --output-dir <OUTPUT_DIR>  \
    --max-steps 20000 \
+   --embodiment-tag franka \
    --data-config franka_triple_cam \
    --video-backend torchvision_av
 ```
