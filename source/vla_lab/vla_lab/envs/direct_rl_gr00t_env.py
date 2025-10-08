@@ -27,7 +27,7 @@ class DirectRLGr00tEnv(DirectRLEnv):
         super().__init__(cfg=cfg, render_mode=render_mode, **kwargs)
 
         self.gr00t_chunk_size = 16
-        self.gr00t_policy = AsyncExternalRobotInferenceClient(host="localhost", port=5555)
+        self.gr00t_policy = AsyncExternalRobotInferenceClient(host="localhost", port=5558)
         print("Initialize Gr00t Client Node")
 
         self.gr00t_actions: Dict[str, Any] | None = None

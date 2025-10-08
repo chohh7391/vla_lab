@@ -208,12 +208,14 @@ class FactoryGr00tEnvCfg(DirectRLEnvCfg):
 ################## GR00T Env ##################
 @configclass
 class FactoryTaskPegInsertGr00tCfg(FactoryGr00tEnvCfg):
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
     task_name = "peg_insert"
     task = PegInsert()
     episode_length_s = 10.0
 
 @configclass
 class FactoryTaskGearMeshGr00tCfg(FactoryGr00tEnvCfg):
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
     task_name = "gear_mesh"
     task = GearMesh()
     episode_length_s = 20.0
@@ -221,6 +223,7 @@ class FactoryTaskGearMeshGr00tCfg(FactoryGr00tEnvCfg):
 
 @configclass
 class FactoryTaskNutThreadGr00tCfg(FactoryGr00tEnvCfg):
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
     task_name = "nut_thread"
     task = NutThread()
     episode_length_s = 30.0

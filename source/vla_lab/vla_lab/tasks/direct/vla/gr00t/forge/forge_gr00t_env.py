@@ -100,7 +100,34 @@ class ForgeGr00tEnv(ForgeEnv):
         # Log Reward
         wandb.log({
             "success_rate": true_successes.sum().item() / self.num_envs,
+            "force_penalty": force_penalty.sum().item() / self.num_envs,
         })
+
+        return rew_buf
+
+    def get_ft_force(self):
+
+        self.force_sensor_world = self._robot.root_physx_view.get_link_incoming_joint_force()[
+            :, self._robot.body_names.index("force_sensor")
+        ]
+        alpha = 0.25
+        self.force_sensor_world_smooth = alpha * self.force_sensor_world + (1 - alpha) * self.force_sensor_world_smooth
+
+        self.force_sensor_smooth = torch.zeros_like(self.force_sensor_world)
+        identity_quat = torch.tensor([1.0, 0.0, 0.0, 0.0], device=self.device).unsqueeze(0).repeat(self.num_envs, 1)
+        self.force_sensor_smooth[:, :3], self.force_sensor_smooth[:, 3:6] = forge_utils.change_FT_frame(
+            self.force_sensor_world_smooth[:, 0:3],
+            self.force_sensor_world_smooth[:, 3:6],
+            (identity_quat, torch.zeros((self.num_envs, 3), device=self.device)),
+            (identity_quat, self.fixed_pos_obs_frame + self.init_fixed_pos_obs_noise),
+        )
+
+        # Compute noisy force values.
+        force_noise = torch.randn((self.num_envs, 3), dtype=torch.float32, device=self.device)
+        force_noise *= 1.0
+        self.noisy_force = self.force_sensor_smooth[:, 0:3] + force_noise
+
+        return self.noisy_force, self.force_sensor_smooth[:, 0:3]
     
     def _pre_physics_step(self, action):
         """Apply policy actions with smoothing."""

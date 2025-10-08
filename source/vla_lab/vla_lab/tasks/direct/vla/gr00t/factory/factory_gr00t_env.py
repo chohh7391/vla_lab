@@ -114,6 +114,11 @@ class FactoryGr00tEnv(FactoryEnv):
         force_mag = torch.norm(force, dim=1)
         force_penalty = torch.where(force_mag > 0.2, -0.1, 0.0)
 
+        wandb.log({
+            "success_rate": curr_successes.sum().item() / self.num_envs,
+            "force_penalty": force_penalty.sum().item() / self.num_envs,
+        })
+
         rew_buf = rew_buf + force_penalty
 
         return rew_buf
