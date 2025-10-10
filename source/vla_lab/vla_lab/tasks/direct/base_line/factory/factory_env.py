@@ -409,8 +409,6 @@ class FactoryEnv(DirectRLEnv):
         curr_successes = self._get_curr_successes(
             success_threshold=self.cfg_task.success_threshold, check_rot=check_rot
         )
-        print(f"curr_successes: {curr_successes.sum().item()}")
-        print(f"episode: {self.episode_length_buf[0].item()} / {self.max_episode_length - 1}")
 
         rew_dict, rew_scales = self._get_factory_rew_dict(curr_successes)
 
