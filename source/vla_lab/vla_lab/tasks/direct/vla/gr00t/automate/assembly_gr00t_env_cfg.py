@@ -24,7 +24,7 @@ from isaaclab.sensors import TiledCameraCfg
 @dataclass
 class DemoSaveCfg:
 
-    dataset_path: str = "/home/hyunho_RCI/datasets/gr00t-rl/automate"
+    dataset_path: str = "/home/hyunho_RCI/datasets/gr00t-rl/automate/assembly"
     chunk_id: str = "chunk-000"
 
     video_dir: dict = field(init=False)
@@ -40,7 +40,7 @@ class DemoSaveCfg:
 
 @dataclass
 class DemoSaveAssembly(DemoSaveCfg):
-    dataset_path: str = "/home/hyunho_RCI/datasets/gr00t-rl/automate/assembly"
+    dataset_path: str = "/home/hyunho_RCI/datasets/gr00t-rl/automate/assembly/00015"
 
 
 @configclass

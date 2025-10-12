@@ -55,6 +55,7 @@ def main():
     parser.add_argument("--log_eval", action="store_true", help="Log evaluation results.")
     parser.add_argument("--headless", action="store_true", help="Run in headless mode.")
     parser.add_argument("--max_iterations", type=int, default=1500, help="Number of iteration for policy learning.")
+    parser.add_argument("--demo_save", action="store_true", help="Run demo saving mode")
     args = parser.parse_args()
 
     update_task_param(args.cfg_path, args.assembly_id, args.train, args.log_eval)
@@ -65,12 +66,15 @@ def main():
     elif sys.platform.startswith("linux"):
         bash_command = "python"
     if args.train:
-        bash_command += " scripts/rl_games/train.py --task=VlaLab-BaseLine-AutoMate-Assembly-Direct-v0"
+        bash_command += " scripts/rl_games/train.py --task=VlaLab-Gr00t-AutoMate-Assembly-Direct-v1"
         bash_command += f" --seed={str(args.seed)} --max_iterations={str(args.max_iterations)}"
     else:
         if not args.checkpoint:
             raise ValueError("No checkpoint provided for evaluation.")
-        bash_command += " scripts/rl_games/play.py --task=VlaLab-BaseLine-AutoMate-Disassembly-Direct-v0"
+        if args.demo_save:
+            bash_command += " scripts/rl_games/play.py --task=VlaLab-Gr00t-AutoMate-Assembly-Demo-Save-Direct-v0 --enable_cameras"
+        else:
+            bash_command += " scripts/rl_games/play.py --task=VlaLab-Gr00t-AutoMate-Assembly-Direct-v1"
 
     bash_command += f" --num_envs={str(args.num_envs)}"
 

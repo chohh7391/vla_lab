@@ -95,7 +95,7 @@ class ForgeGr00tEnv(ForgeEnv):
         force_mag = torch.norm(force, dim=1)
         force_penalty = torch.where(force_mag > 0.2, -0.1, 0.0)
 
-        rew_buf = force_penalty + rew_buf
+        rew_buf = rew_buf # + force_penalty
         
         # Log Reward
         wandb.log({
