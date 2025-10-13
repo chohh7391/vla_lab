@@ -14,11 +14,24 @@ from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sim import PhysxCfg, SimulationCfg
 from isaaclab.sim.spawners.materials.physics_materials_cfg import RigidBodyMaterialCfg
 from isaaclab.utils import configclass
+from isaaclab.sensors import TiledCameraCfg
 
-from vla_lab.tasks.direct.base_line.automate.assembly_tasks_cfg import ASSET_DIR, Insertion
+from vla_lab.tasks.direct.base_line.automate.assembly_tasks_cfg import ASSET_DIR
 from vla_lab.tasks.direct.base_line.automate.assembly_env_cfg import OBS_DIM_CFG, STATE_DIM_CFG
 from vla_lab.tasks.direct.base_line.automate.assembly_env_cfg import ObsRandCfg, CtrlCfg
-from isaaclab.sensors import TiledCameraCfg
+
+from vla_lab.tasks.direct.vla.gr00t.automate.assembly_gr00t_tasks_cfg import Insertion
+
+
+OBS_DIM_CFG.update({
+    "force_threshold": 1,
+    "ft_force": 3,
+})
+
+STATE_DIM_CFG.update({
+    "force_threshold": 1,
+    "ft_force": 3,
+})
 
 
 @dataclass
@@ -48,8 +61,8 @@ class AssemblyEnvCfg(DirectRLEnvCfg):
     decimation = 8
     action_space = 6
     # num_*: will be overwritten to correspond to obs_order, state_order.
-    observation_space = 24 # TODO: add F/T Sensor dim
-    state_space = 44 # TODO: add F/T Sensor dim
+    observation_space = 24 # this is changed in env.py
+    state_space = 44 # this is changed in env.py
     obs_order: list = [
         "joint_pos",
         "fingertip_pos",
@@ -57,6 +70,9 @@ class AssemblyEnvCfg(DirectRLEnvCfg):
         "fingertip_goal_pos",
         "fingertip_goal_quat",
         "delta_pos",
+
+        "force_threshold",
+        "ft_force",
     ]
     state_order: list = [
         "joint_pos",
@@ -70,6 +86,9 @@ class AssemblyEnvCfg(DirectRLEnvCfg):
         "held_pos",
         "held_quat",
         "delta_pos",
+
+        "force_threshold",
+        "ft_force",
     ]
 
     task_name: str = "insertion"  # peg_insertion, gear_meshing, nut_threading

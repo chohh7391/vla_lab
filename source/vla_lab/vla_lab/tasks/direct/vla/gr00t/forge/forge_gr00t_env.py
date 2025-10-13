@@ -131,13 +131,13 @@ class ForgeGr00tEnv(ForgeEnv):
 
         rew_dict = {
             "curr_success": curr_successes.float(),
-            "action_penalty_asset": pos_error + rot_error,
-            "contact_penalty": contact_penalty,
+            # "action_penalty_asset": pos_error + rot_error,
+            # "contact_penalty": contact_penalty,
         }
         rew_scales = {
             "curr_success": 1.0,
-            "action_penalty_asset": -self.cfg_task.action_penalty_asset_scale,
-            "contact_penalty": -self.cfg_task.contact_penalty_scale,
+            # "action_penalty_asset": -self.cfg_task.action_penalty_asset_scale,
+            # "contact_penalty": -self.cfg_task.contact_penalty_scale,
         }
 
         for rew_name in rew_dict.keys():
@@ -148,16 +148,12 @@ class ForgeGr00tEnv(ForgeEnv):
                 rew_name: rew.sum().item() / self.num_envs
             })
 
+        wandb.log({
+            "success_rate": curr_successes.sum().item()
+        })
+
         return rew_buf
         
-
-
-    
-    def _pre_physics_step(self, action):
-        """Apply policy actions with smoothing."""
-        # Save last actions for gr00t data logging
-        self.last_actions = action.clone()
-        super()._pre_physics_step(action) # This changes action to smoothed action
 
     def _get_observations(self):
         """Add additional FORGE observations."""

@@ -157,11 +157,13 @@ class FactoryGr00tEnv(FactoryEnv):
         obs_dict.update({
             "force_threshold": self.contact_penalty_thresholds[:, None],
             "ft_force": noisy_force,
+            "prev_actions": prev_actions,
         })
 
         state_dict.update({
             "ft_force": force_sensor_smooth[:, 0:3],
             "force_threshold": self.contact_penalty_thresholds[:, None],
+            "prev_actions": prev_actions,
         })
 
         obs_tensors = factory_utils.collapse_obs_dict(obs_dict, self.cfg.obs_order + ["prev_actions"])
@@ -218,13 +220,13 @@ class FactoryGr00tEnv(FactoryEnv):
 
         rew_dict = {
             "curr_success": curr_successes.float(),
-            "action_penalty_asset": pos_error + rot_error,
-            "contact_penalty": contact_penalty,
+            # "action_penalty_asset": pos_error + rot_error,
+            # "contact_penalty": contact_penalty,
         }
         rew_scales = {
             "curr_success": 1.0,
-            "action_penalty_asset": -self.cfg_task.action_penalty_asset_scale,
-            "contact_penalty": -self.cfg_task.contact_penalty_scale,
+            # "action_penalty_asset": -self.cfg_task.action_penalty_asset_scale,
+            # "contact_penalty": -self.cfg_task.contact_penalty_scale,
         }
 
         for rew_name in rew_dict.keys():
@@ -234,6 +236,10 @@ class FactoryGr00tEnv(FactoryEnv):
             wandb.log({
                 rew_name: rew.sum().item() / self.num_envs
             })
+
+        wandb.log({
+            "success_rate": curr_successes.sum().item()
+        })
 
         return rew_buf
 

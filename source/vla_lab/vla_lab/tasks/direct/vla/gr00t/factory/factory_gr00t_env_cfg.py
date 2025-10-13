@@ -60,7 +60,14 @@ class FactoryGr00tEnvCfg(DirectRLEnvCfg):
     # num_*: will be overwritten to correspond to obs_order, state_order.
     observation_space = 21
     state_space = 72
-    obs_order: list = ["fingertip_pos_rel_fixed", "fingertip_quat", "ee_linvel", "ee_angvel"]
+    obs_order: list = [
+        "fingertip_pos_rel_fixed",
+        "fingertip_quat",
+        "ee_linvel",
+        "ee_angvel",
+        "force_threshold",
+        "ft_force",
+    ]
     state_order: list = [
         "fingertip_pos",
         "fingertip_quat",
@@ -72,6 +79,8 @@ class FactoryGr00tEnvCfg(DirectRLEnvCfg):
         "held_quat",
         "fixed_pos",
         "fixed_quat",
+        "force_threshold",
+        "ft_force",
     ]
 
     task_name: str = "peg_insert"  # peg_insert, gear_mesh, nut_thread

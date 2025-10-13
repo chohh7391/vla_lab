@@ -60,7 +60,7 @@ params:
     normalize_input: True
     normalize_value: True
     value_bootstrap: True
-    num_actors: 128
+    num_actors: 64
     reward_shaper:
       scale_value: 1.0
     normalize_advantage: True

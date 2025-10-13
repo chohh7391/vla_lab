@@ -49,7 +49,7 @@ def main():
     )
     parser.add_argument("--assembly_id", type=str, help="New assembly ID to set.")
     parser.add_argument("--checkpoint", type=str, help="Checkpoint path.")
-    parser.add_argument("--num_envs", type=int, default=128, help="Number of parallel environment.")
+    parser.add_argument("--num_envs", type=int, default=64, help="Number of parallel environment.")
     parser.add_argument("--seed", type=int, default=-1, help="Random seed.")
     parser.add_argument("--train", action="store_true", help="Run training mode.")
     parser.add_argument("--log_eval", action="store_true", help="Log evaluation results.")
@@ -66,7 +66,7 @@ def main():
     elif sys.platform.startswith("linux"):
         bash_command = "python"
     if args.train:
-        bash_command += " scripts/rl_games/train.py --task=VlaLab-Gr00t-AutoMate-Assembly-Direct-v1"
+        bash_command += " scripts/rl_games/train.py --task=VlaLab-Gr00t-AutoMate-Assembly-Direct-v1 --enable_cameras"
         bash_command += f" --seed={str(args.seed)} --max_iterations={str(args.max_iterations)}"
     else:
         if not args.checkpoint:
@@ -74,7 +74,7 @@ def main():
         if args.demo_save:
             bash_command += " scripts/rl_games/play.py --task=VlaLab-Gr00t-AutoMate-Assembly-Demo-Save-Direct-v0 --enable_cameras"
         else:
-            bash_command += " scripts/rl_games/play.py --task=VlaLab-Gr00t-AutoMate-Assembly-Direct-v1"
+            bash_command += " scripts/rl_games/play.py --task=VlaLab-Gr00t-AutoMate-Assembly-Direct-v1 --enable_cameras"
 
     bash_command += f" --num_envs={str(args.num_envs)}"
 
