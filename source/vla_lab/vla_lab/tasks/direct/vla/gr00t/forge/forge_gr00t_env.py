@@ -149,7 +149,7 @@ class ForgeGr00tEnv(ForgeEnv):
             })
 
         wandb.log({
-            "success_rate": curr_successes.sum().item()
+            "success_rate": curr_successes.sum().item() / self.num_envs
         })
 
         return rew_buf
