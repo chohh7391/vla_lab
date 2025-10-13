@@ -11,7 +11,7 @@ from isaaclab.utils import configclass
 from isaaclab.sensors import TiledCameraCfg
 import isaaclab.sim as sim_utils
 
-from vla_lab.tasks.direct.base_line.forge.forge_tasks_cfg import ForgeGearMesh, ForgeNutThread, ForgePegInsert, ForgeTask
+from vla_lab.tasks.direct.vla.gr00t.forge.forge_gr00t_tasks_cfg import ForgeGr00tTask, ForgeGr00tGearMesh, ForgeGr00tNutThread, ForgeGr00tPegInsert
 from vla_lab.tasks.direct.base_line.factory.factory_env_cfg import OBS_DIM_CFG, STATE_DIM_CFG
 from vla_lab.tasks.direct.base_line.forge.forge_env_cfg import ForgeEnvCfg
 
@@ -55,6 +55,7 @@ class DemoSaveNutThread(DemoSaveCfg):
 class ForgeGr00tEnvCfg(ForgeEnvCfg):
 
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
+    task: ForgeGr00tTask = ForgeGr00tTask()
 
     # Camera Config
     left_camera: TiledCameraCfg = TiledCameraCfg(
@@ -98,20 +99,20 @@ class ForgeGr00tEnvCfg(ForgeEnvCfg):
 @configclass
 class ForgeTaskPegInsertGr00tCfg(ForgeGr00tEnvCfg):
     task_name = "peg_insert"
-    task = ForgePegInsert()
+    task = ForgeGr00tPegInsert()
     episode_length_s = 10.0
 
 @configclass
 class ForgeTaskGearMeshGr00tCfg(ForgeGr00tEnvCfg):
     task_name = "gear_mesh"
-    task = ForgeGearMesh()
+    task = ForgeGr00tGearMesh()
     episode_length_s = 20.0
     
 
 @configclass
 class ForgeTaskNutThreadGr00tCfg(ForgeGr00tEnvCfg):
     task_name = "nut_thread"
-    task = ForgeNutThread()
+    task = ForgeGr00tNutThread()
     episode_length_s = 30.0
     
 

@@ -88,7 +88,7 @@ class FactoryEnvCfg(DirectRLEnvCfg):
         "fixed_quat",
     ]
 
-    task_name: str = "peg_insert"  # peg_insert, gear_mesh, nut_thread
+    task_name: str = "peg_insert" # peg_insert, gear_mesh, nut_thread
     task: FactoryTask = FactoryTask()
     obs_rand: ObsRandCfg = ObsRandCfg()
     ctrl: CtrlCfg = CtrlCfg()

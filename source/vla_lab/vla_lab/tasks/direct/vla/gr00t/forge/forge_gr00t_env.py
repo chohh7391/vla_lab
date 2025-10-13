@@ -83,25 +83,7 @@ class ForgeGr00tEnv(ForgeEnv):
 
     def _get_rewards(self):
         """FORGE reward includes a contact penalty and success prediction error."""
-        # Add success prediction rewards.
-        check_rot = self.cfg_task.name == "nut_thread"
-        true_successes = self._get_curr_successes(
-            success_threshold=self.cfg_task.success_threshold, check_rot=check_rot
-        )
-
-        rew_buf = torch.where(true_successes, 1.0, 0.0)
-
-        force = self.get_ft_force()[1]
-        force_mag = torch.norm(force, dim=1)
-        force_penalty = torch.where(force_mag > 0.2, -0.1, 0.0)
-
-        rew_buf = rew_buf # + force_penalty
-        
-        # Log Reward
-        wandb.log({
-            "success_rate": true_successes.sum().item() / self.num_envs,
-            "force_penalty": force_penalty.sum().item() / self.num_envs,
-        })
+        rew_buf = self.get_sparse_rewards()
 
         return rew_buf
 
@@ -113,9 +95,9 @@ class ForgeGr00tEnv(ForgeEnv):
         alpha = 0.25
         self.force_sensor_world_smooth = alpha * self.force_sensor_world + (1 - alpha) * self.force_sensor_world_smooth
 
-        self.force_sensor_smooth = torch.zeros_like(self.force_sensor_world)
+        force_sensor_smooth = torch.zeros_like(self.force_sensor_world)
         identity_quat = torch.tensor([1.0, 0.0, 0.0, 0.0], device=self.device).unsqueeze(0).repeat(self.num_envs, 1)
-        self.force_sensor_smooth[:, :3], self.force_sensor_smooth[:, 3:6] = forge_utils.change_FT_frame(
+        force_sensor_smooth[:, :3], force_sensor_smooth[:, 3:6] = forge_utils.change_FT_frame(
             self.force_sensor_world_smooth[:, 0:3],
             self.force_sensor_world_smooth[:, 3:6],
             (identity_quat, torch.zeros((self.num_envs, 3), device=self.device)),
@@ -125,9 +107,51 @@ class ForgeGr00tEnv(ForgeEnv):
         # Compute noisy force values.
         force_noise = torch.randn((self.num_envs, 3), dtype=torch.float32, device=self.device)
         force_noise *= 1.0
-        self.noisy_force = self.force_sensor_smooth[:, 0:3] + force_noise
+        noisy_force = force_sensor_smooth[:, 0:3] + force_noise
 
-        return self.noisy_force, self.force_sensor_smooth[:, 0:3]
+        return noisy_force, force_sensor_smooth[:, 0:3]
+    
+    def get_sparse_rewards(self) -> torch.Tensor:
+        
+        rew_buf = torch.zeros(self.num_envs, dtype=torch.float32, device=self.device)
+        rew_dict, rew_scales = {}, {}
+
+        # Calculate action penalty for the asset-relative action space.
+        pos_error = torch.norm(self.delta_pos, p=2, dim=-1) / self.cfg.ctrl.pos_action_threshold[0]
+        rot_error = torch.abs(self.delta_yaw) / self.cfg.ctrl.rot_action_threshold[0]
+        # Contact penalty.
+        noisy_force, force_sensor_smooth = self.get_ft_force()
+        contact_force = torch.norm(force_sensor_smooth[:, 0:3], p=2, dim=-1, keepdim=False)
+        contact_penalty = torch.nn.functional.relu(contact_force - self.contact_penalty_thresholds)
+        # Add success prediction rewards.
+        check_rot = self.cfg_task.name == "nut_thread"
+        curr_successes = self._get_curr_successes(
+            success_threshold=self.cfg_task.success_threshold, check_rot=check_rot
+        )
+
+        rew_dict = {
+            "curr_success": curr_successes.float(),
+            "action_penalty_asset": pos_error + rot_error,
+            "contact_penalty": contact_penalty,
+        }
+        rew_scales = {
+            "curr_success": 1.0,
+            "action_penalty_asset": -self.cfg_task.action_penalty_asset_scale,
+            "contact_penalty": -self.cfg_task.contact_penalty_scale,
+        }
+
+        for rew_name in rew_dict.keys():
+            rew = rew_dict[rew_name] * rew_scales[rew_name]
+            rew_buf += rew
+
+            wandb.log({
+                rew_name: rew.sum().item() / self.num_envs
+            })
+
+        return rew_buf
+        
+
+
     
     def _pre_physics_step(self, action):
         """Apply policy actions with smoothing."""
@@ -143,18 +167,20 @@ class ForgeGr00tEnv(ForgeEnv):
         prev_actions = self.actions.clone()
         prev_actions[:, 3:5] = 0.0
 
+        noisy_force, force_sensor_smooth = self.get_ft_force()
+
         obs_dict.update({
             "fingertip_pos": self.noisy_fingertip_pos,
             "fingertip_pos_rel_fixed": self.noisy_fingertip_pos - noisy_fixed_pos,
             "fingertip_quat": self.noisy_fingertip_quat,
             "force_threshold": self.contact_penalty_thresholds[:, None],
-            "ft_force": self.noisy_force,
+            "ft_force": noisy_force,
             "prev_actions": prev_actions,
         })
 
         state_dict.update({
             "ema_factor": self.ema_factor,
-            "ft_force": self.force_sensor_smooth[:, 0:3],
+            "ft_force": force_sensor_smooth[:, 0:3],
             "force_threshold": self.contact_penalty_thresholds[:, None],
             "prev_actions": prev_actions,
         })

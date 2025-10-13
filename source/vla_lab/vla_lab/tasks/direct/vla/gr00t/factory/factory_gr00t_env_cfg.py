@@ -15,8 +15,14 @@ from isaaclab.sim.spawners.materials.physics_materials_cfg import RigidBodyMater
 from isaaclab.utils import configclass
 from isaaclab.sensors import TiledCameraCfg
 
-from vla_lab.tasks.direct.base_line.factory.factory_tasks_cfg import ASSET_DIR, FactoryTask, GearMesh, NutThread, PegInsert
 from vla_lab.tasks.direct.base_line.factory.factory_env_cfg import OBS_DIM_CFG, STATE_DIM_CFG, ObsRandCfg, ObsRandCfg, CtrlCfg
+from vla_lab.tasks.direct.base_line.factory.factory_tasks_cfg import ASSET_DIR
+from vla_lab.tasks.direct.vla.gr00t.factory.factory_gr00t_tasks_cfg import FactoryGr00tTask, FactoryGr00tGearMesh, FactoryGr00tNutThread, FactoryGr00tPegInsert
+
+OBS_DIM_CFG.update({"force_threshold": 1, "ft_force": 3})
+
+STATE_DIM_CFG.update({"force_threshold": 1, "ft_force": 3})
+
 
 @dataclass
 class DemoSaveCfg:
@@ -69,7 +75,7 @@ class FactoryGr00tEnvCfg(DirectRLEnvCfg):
     ]
 
     task_name: str = "peg_insert"  # peg_insert, gear_mesh, nut_thread
-    task: FactoryTask = FactoryTask()
+    task: FactoryGr00tTask = FactoryGr00tTask()
     obs_rand: ObsRandCfg = ObsRandCfg()
     ctrl: CtrlCfg = CtrlCfg()
 
@@ -210,14 +216,14 @@ class FactoryGr00tEnvCfg(DirectRLEnvCfg):
 class FactoryTaskPegInsertGr00tCfg(FactoryGr00tEnvCfg):
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
     task_name = "peg_insert"
-    task = PegInsert()
+    task = FactoryGr00tPegInsert()
     episode_length_s = 10.0
 
 @configclass
 class FactoryTaskGearMeshGr00tCfg(FactoryGr00tEnvCfg):
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
     task_name = "gear_mesh"
-    task = GearMesh()
+    task = FactoryGr00tGearMesh()
     episode_length_s = 20.0
     
 
@@ -225,7 +231,7 @@ class FactoryTaskGearMeshGr00tCfg(FactoryGr00tEnvCfg):
 class FactoryTaskNutThreadGr00tCfg(FactoryGr00tEnvCfg):
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
     task_name = "nut_thread"
-    task = NutThread()
+    task = FactoryGr00tNutThread()
     episode_length_s = 30.0
     
 
