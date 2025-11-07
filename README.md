@@ -187,7 +187,8 @@ python scripts/rl_games/play.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Demo-Sav
 python source/vla_lab/vla_lab/tasks/direct/base_line/automate/run_w_id.py --assembly_id=<Assembly_ID> --train
 ```
 
-
+- You can use hugging face
+  - add `--huggingface` in terminal
 
 
 ## 2. Train Gr00t Model using Demo
@@ -252,13 +253,13 @@ python scripts/inference_service.py --server --model_path <GR00T_MODEL_PATH> --e
 - Train vla-rl policy
 
 ```
-python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-PegInsert-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-peg_insert --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME}
+python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-PegInsert-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-peg_insert --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
 ```
 
 ```
-python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-GearMesh-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-gear_mesh --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME}
+python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-GearMesh-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-gear_mesh --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
 ```
 
 ```
-python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-nut_thread --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME}
+python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-nut_thread --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
 ```
