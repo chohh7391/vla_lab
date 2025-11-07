@@ -5,10 +5,6 @@
 import numpy as np
 import torch
 
-import isaacsim.core.utils.torch as torch_utils
-
-from isaaclab.utils.math import axis_angle_from_quat
-
 from vla_lab.tasks.direct.base_line.factory import factory_utils
 from vla_lab.tasks.direct.base_line.forge import forge_utils
 from vla_lab.tasks.direct.vla.gr00t.forge.base.forge_env import ForgeEnv
@@ -18,16 +14,9 @@ import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.sim.spawners.from_files import GroundPlaneCfg, spawn_ground_plane
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
-from isaaclab.utils.math import axis_angle_from_quat, matrix_from_quat
 
-from isaaclab.sensors import TiledCamera, TiledCameraCfg, save_images_to_file
-import wandb
-import time
-import os
-from torchvision.utils import make_grid, save_image
-import pandas as pd
-import sys
-from torchvision.io import write_video
+from isaaclab.sensors import TiledCamera
+
 
 
 class ForgeGr00tEnv(ForgeEnv):
@@ -36,9 +25,6 @@ class ForgeGr00tEnv(ForgeEnv):
     def __init__(self, cfg: ForgeGr00tEnvCfg, render_mode: str | None = None, **kwargs):
         """Initialize additional randomization and logging tensors."""
         super().__init__(cfg, render_mode, **kwargs)
-
-        if wandb.run is None:
-            wandb.init(project=f"vla-rl-forge-{cfg.task_name}", name=time.strftime('%m%d-%H:%M:%S'))
 
     def _setup_scene(self):
         """Initialize simulation scene."""
@@ -143,14 +129,6 @@ class ForgeGr00tEnv(ForgeEnv):
         for rew_name in rew_dict.keys():
             rew = rew_dict[rew_name] * rew_scales[rew_name]
             rew_buf += rew
-
-            wandb.log({
-                rew_name: rew.sum().item() / self.num_envs
-            })
-
-        wandb.log({
-            "success_rate": curr_successes.sum().item() / self.num_envs
-        })
 
         return rew_buf
         

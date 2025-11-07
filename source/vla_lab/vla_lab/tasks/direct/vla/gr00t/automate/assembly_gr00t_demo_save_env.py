@@ -17,7 +17,6 @@ from vla_lab.tasks.direct.base_line.automate.assembly_env import AssemblyEnv
 
 from vla_lab.tasks.direct.vla.gr00t.automate.assembly_gr00t_env_cfg import AssemblyEnvCfg
 
-import wandb
 import time
 
 import os
@@ -31,9 +30,6 @@ class AssemblyGr00tDemoSaveEnv(AssemblyEnv):
     def __init__(self, cfg: AssemblyEnvCfg, render_mode: str | None = None, **kwargs):
 
         super().__init__(cfg, render_mode, **kwargs)
-
-        if wandb.run is None:
-            wandb.init(project=f"vla-rl-automate-{cfg.task_name}", name=time.strftime('%m%d-%H:%M:%S'))
 
         self.demo_save_cfg = self.cfg.demo_save_cfg
 

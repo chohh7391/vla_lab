@@ -26,9 +26,6 @@ from vla_lab.tasks.direct.vla.gr00t.automate.base.assembly_env import AssemblyEn
 from vla_lab.tasks.direct.base_line.automate.assembly_env_cfg import OBS_DIM_CFG, STATE_DIM_CFG
 from vla_lab.envs import DirectRLGr00tEnv
 
-import wandb
-import time
-
 class AssemblyGr00tEnv(AssemblyEnv):
     cfg: AssemblyEnvCfg
 
@@ -77,9 +74,6 @@ class AssemblyGr00tEnv(AssemblyEnv):
         self.force_sensor_body_idx = self._robot.body_names.index("force_sensor")
         self.force_sensor_smooth = torch.zeros((self.num_envs, 6), device=self.device)
         self.force_sensor_world_smooth = torch.zeros((self.num_envs, 6), device=self.device)
-
-        if wandb.run is None:
-            wandb.init(project=f"vla-rl-automate-{self.cfg_task.assembly_id}", name=time.strftime('%m%d-%H:%M:%S'))
 
 
     def _setup_scene(self):
@@ -285,15 +279,8 @@ class AssemblyGr00tEnv(AssemblyEnv):
             rew = rew_dict[rew_name] * rew_scales[rew_name]
             rew_buf += rew
 
-            wandb.log({
-                rew_name: rew.sum().item() / self.num_envs
-            })
-
-        wandb.log({
-            "success_rate": curr_successes.sum().item() / self.num_envs
-        })
-
         return rew_buf
+
 
     def _get_gr00t_observations(self):
         # This is for gr00t observations

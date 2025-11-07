@@ -16,7 +16,6 @@ from isaaclab.sim.spawners.from_files import GroundPlaneCfg, spawn_ground_plane
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
 from isaaclab.sensors import TiledCamera
-import wandb
 import time
 import os
 import pandas as pd
@@ -30,9 +29,6 @@ class ForgeGr00tDemoSaveEnv(ForgeEnv):
     def __init__(self, cfg: ForgeGr00tEnvCfg, render_mode: str | None = None, **kwargs):
         """Initialize additional randomization and logging tensors."""
         super().__init__(cfg, render_mode, **kwargs)
-
-        if wandb.run is None:
-            wandb.init(project=f"vla-rl-forge-{cfg.task_name}", name=time.strftime('%m%d-%H:%M:%S'))
 
         self.demo_save_cfg = self.cfg.demo_save_cfg
 
@@ -94,11 +90,6 @@ class ForgeGr00tDemoSaveEnv(ForgeEnv):
 
         rew_buf = torch.where(true_successes, 1.0, 0.0)
         # TODO: Add force limit penalty
-
-        # Log Reward
-        wandb.log({
-            "success_rate": true_successes.sum().item() / self.num_envs,
-        })
 
         return rew_buf
     

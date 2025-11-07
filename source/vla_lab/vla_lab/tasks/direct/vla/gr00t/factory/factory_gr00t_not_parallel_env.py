@@ -23,9 +23,6 @@ from vla_lab.tasks.direct.vla.gr00t.factory.factory_gr00t_env_cfg import Factory
 from vla_lab.tasks.direct.vla.gr00t.factory.base.factory_not_parallel_env import FactoryEnv
 from vla_lab.tasks.direct.base_line.forge import forge_utils
 
-import wandb
-import time
-
 
 class FactoryGr00tNotParallelEnv(FactoryEnv):
     cfg: FactoryGr00tEnvCfg
@@ -38,10 +35,6 @@ class FactoryGr00tNotParallelEnv(FactoryEnv):
         self.force_sensor_body_idx = self._robot.body_names.index("force_sensor")
         self.force_sensor_smooth = torch.zeros((self.num_envs, 6), device=self.device)
         self.force_sensor_world_smooth = torch.zeros((self.num_envs, 6), device=self.device)
-
-        if wandb.run is None:
-            wandb.init(project=f"vla-rl-factory-{cfg.task_name}", name=time.strftime('%m%d-%H:%M:%S'))
-
 
     def _setup_scene(self):
         """Initialize simulation scene."""

@@ -42,6 +42,7 @@ parser.add_argument(
     help="if toggled, this experiment will be tracked with Weights and Biases",
 )
 parser.add_argument("--export_io_descriptors", action="store_true", default=False, help="Export IO descriptors.")
+parser.add_argument("--huggingface", action="store_true", default=False, help="Upload logs to Hugging Face and remove local logs after training.")
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
@@ -64,6 +65,10 @@ import math
 import os
 import random
 from datetime import datetime
+
+import huggingface_hub
+from huggingface_hub import create_repo, upload_folder, whoami
+import shutil
 
 import omni
 from rl_games.common import env_configurations, vecenv
@@ -147,6 +152,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     print(f"[INFO] Logging experiment in directory: {log_root_path}")
     # specify directory for logging runs
     log_dir = agent_cfg["params"]["config"].get("full_experiment_name", datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+
+    full_log_path = os.path.join(log_root_path, log_dir)
+    if args_cli.huggingface:
+        username = whoami()["name"]
+        repo_name = f"{config_name}-{log_dir}"
+        repo_id = f"{username}/{repo_name}"
+        print(f"[INFO] Creating Hugging Face repo: {repo_id}")
+        create_repo(repo_id=repo_id, repo_type="model", private=False, exist_ok=True)
+    else:
+        repo_id = None
+
     # set directory into agent config
     # logging directory path: <train_dir>/<full_experiment_name>
     agent_cfg["params"]["config"]["train_dir"] = log_root_path
@@ -246,6 +262,20 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # close the simulator
     env.close()
+
+    # using hugging face
+    if args_cli.huggingface:
+        print(f"[INFO] Uploading RL-Games results to Hugging Face: {repo_id}")
+        upload_folder(
+            folder_path=full_log_path,
+            repo_id=repo_id,
+            repo_type="model",
+            commit_message=f"Upload training result {config_name} ({log_dir})"
+        )
+        print(f"[INFO] Uploaded successfully to https://huggingface.co/{repo_id}")
+        print(f"[INFO] Removing local folder: {full_log_path}")
+        shutil.rmtree(full_log_path, ignore_errors=True)
+        print("[INFO] Local logs deleted after upload.")
 
 
 if __name__ == "__main__":

@@ -17,9 +17,6 @@ from vla_lab.tasks.direct.base_line.factory.factory_env import FactoryEnv
 
 from vla_lab.tasks.direct.vla.gr00t.factory.factory_gr00t_env_cfg import FactoryGr00tEnvCfg
 
-import wandb
-import time
-
 import pandas as pd
 import sys
 import os
@@ -32,9 +29,6 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
     def __init__(self, cfg: FactoryGr00tEnvCfg, render_mode: str | None = None, **kwargs):
         # Update number of obs/states
         super().__init__(cfg, render_mode, **kwargs)
-
-        if wandb.run is None:
-            wandb.init(project=f"vla-rl-factory-{cfg.task_name}", name=time.strftime('%m%d-%H:%M:%S'))
 
         self.demo_save_cfg = self.cfg.demo_save_cfg
 

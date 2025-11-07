@@ -30,7 +30,6 @@ from vla_lab.tasks.direct.vla.gr00t.automate.assembly_gr00t_env_cfg import Assem
 from vla_lab.tasks.direct.vla.gr00t.automate.base.assembly_not_parallel_env import AssemblyEnv
 from vla_lab.tasks.direct.base_line.forge import forge_utils
 
-import wandb
 import time
 
 class AssemblyGr00tNotParallelEnv(AssemblyEnv):
@@ -44,10 +43,6 @@ class AssemblyGr00tNotParallelEnv(AssemblyEnv):
         self.force_sensor_body_idx = self._robot.body_names.index("force_sensor")
         self.force_sensor_smooth = torch.zeros((self.num_envs, 6), device=self.device)
         self.force_sensor_world_smooth = torch.zeros((self.num_envs, 6), device=self.device)
-
-        if wandb.run is None:
-            wandb.init(project=f"vla-rl-automate-{cfg.task_name}", name=time.strftime('%m%d-%H:%M:%S'))
-
 
     def _setup_scene(self):
         """Initialize simulation scene."""
@@ -171,11 +166,6 @@ class AssemblyGr00tNotParallelEnv(AssemblyEnv):
         force_penalty = torch.where(force_mag > 0.2, -0.1, 0.0)
 
         rew_buf = rew_buf + force_penalty
-        
-        # Log Reward
-        wandb.log({
-            "success_rate": curr_successes.sum().item() / self.num_envs,
-        })
 
         self.prev_actions = self.actions.clone()
         return rew_buf

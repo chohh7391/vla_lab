@@ -15,9 +15,6 @@ from isaaclab.sim.spawners.from_files import GroundPlaneCfg, spawn_ground_plane
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
 from isaaclab.sensors import TiledCamera
-import wandb
-import time
-
 
 
 class ForgeGr00tNotParallelEnv(ForgeEnv):
@@ -26,9 +23,6 @@ class ForgeGr00tNotParallelEnv(ForgeEnv):
     def __init__(self, cfg: ForgeGr00tEnvCfg, render_mode: str | None = None, **kwargs):
         """Initialize additional randomization and logging tensors."""
         super().__init__(cfg, render_mode, **kwargs)
-
-        if wandb.run is None:
-            wandb.init(project=f"vla-rl-forge-{cfg.task_name}", name=time.strftime('%m%d-%H:%M:%S'))
 
     def _setup_scene(self):
         """Initialize simulation scene."""
@@ -86,11 +80,6 @@ class ForgeGr00tNotParallelEnv(ForgeEnv):
         force_penalty = torch.where(force_mag > 0.2, -0.1, 0.0)
 
         rew_buf = force_penalty + rew_buf
-        
-        # Log Reward
-        wandb.log({
-            "success_rate": true_successes.sum().item() / self.num_envs,
-        })
 
         return rew_buf
     

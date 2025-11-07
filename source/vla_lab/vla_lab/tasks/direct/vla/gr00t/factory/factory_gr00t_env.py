@@ -20,9 +20,6 @@ from vla_lab.tasks.direct.vla.gr00t.factory.factory_gr00t_env_cfg import Factory
 from vla_lab.tasks.direct.vla.gr00t.factory.base.factory_env import FactoryEnv
 from vla_lab.tasks.direct.base_line.forge import forge_utils
 
-import wandb
-import time
-
 
 class FactoryGr00tEnv(FactoryEnv):
     cfg: FactoryGr00tEnvCfg
@@ -36,10 +33,6 @@ class FactoryGr00tEnv(FactoryEnv):
         self.force_sensor_body_idx = self._robot.body_names.index("force_sensor")
         self.force_sensor_smooth = torch.zeros((self.num_envs, 6), device=self.device)
         self.force_sensor_world_smooth = torch.zeros((self.num_envs, 6), device=self.device)
-
-        if wandb.run is None:
-            wandb.init(project=f"vla-rl-factory-{cfg.task_name}", name=time.strftime('%m%d-%H:%M:%S'))
-
 
     def _setup_scene(self):
         """Initialize simulation scene."""
@@ -232,14 +225,6 @@ class FactoryGr00tEnv(FactoryEnv):
         for rew_name in rew_dict.keys():
             rew = rew_dict[rew_name] * rew_scales[rew_name]
             rew_buf += rew
-
-            wandb.log({
-                rew_name: rew.sum().item() / self.num_envs
-            })
-
-        wandb.log({
-            "success_rate": curr_successes.sum().item() / self.num_envs
-        })
 
         return rew_buf
 
