@@ -41,6 +41,11 @@ This repository is a framework that uses a VLA model as a backbone to improve su
     ./isaaclab.sh --install
     ```
 
+  - install extra dependencies
+    ```bash
+    pip install zmq scikit-learn pyarrow fastparquet av
+    ```
+
 - Using a python interpreter that has Isaac Lab installed, install the library in editable mode using:
 
     ```bash
