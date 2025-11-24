@@ -10,41 +10,37 @@ This repository is a framework that uses a VLA model as a backbone to improve su
 
 ## Installation
 
-- Install Isaac Lab by following the [installation guide](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/index.html).
-  We recommend using the conda or uv installation as it simplifies calling Python scripts from the terminal.
+```bash
+# 1) Conda env
+conda create -n wheel_leg_humanoid_lab python=3.11
+conda activate wheel_leg_humanoid_lab
 
-  - create conda env
-    ```bash
-    conda create -n vla_lab python=3.11
-    conda activate vla_lab
-    ```
+# 2) Clone the repo
+cd $HOME
+git clone https://github.com/chohh7391/wheel_leg_humanoid_lab.git
+cd wheel_leg_humanoid_lab
 
-  - install dependencies
-    ```bash
-    pip install --upgrade pip
-    pip install "isaacsim[all,extscache]==5.1.0" --extra-index-url https://pypi.nvidia.com
-    pip install -U torch==2.7.0 torchvision==0.22.0 --index-url https://download.pytorch.org/whl/cu128
-    ```
+# 3) Isaac Sim SDK (v5.1.0)
+pip install --upgrade pip
+pip install "isaacsim[all,extscache]==5.1.0" --extra-index-url https://pypi.nvidia.com
 
-- Clone or copy this project/repository separately from the Isaac Lab installation (i.e. outside the `IsaacLab` directory):
+# 4) Pytorch (CUDA 12.8)
+pip install -U torch==2.7.0 torchvision==0.22.0 --index-url https://download.pytorch.org/whl/cu128
 
-  - clone IsaacLab repository (v2.3.0)
-    ```bash
-    cd ~/
-    git clone -b v2.3.0 git@github.com:isaac-sim/IsaacLab.git
-    ```
+# 5) Isaac Lab (v2.3.0)
+git clone -b v2.3.0 git@github.com:isaac-sim/IsaacLab.git _isaaclab
+sudo apt install -y cmake build-essential
+./_isaaclab/isaaclab.sh --install
 
-  - install dependencies of isaaclab
-    ```bash
-    cd IsaacLab
-    sudo apt install cmake build-essential
-    ./isaaclab.sh --install
-    ```
+# 6) Smoke test (headless sim)
+python _isaaclab/scripts/tutorials/00_sim/create_empty.py --headless
 
-  - install extra dependencies
-    ```bash
-    pip install zmq scikit-learn pyarrow fastparquet av
-    ```
+# 7) Dev install
+python -m pip install -e source/wheel_leg_humanoid_lab
+
+# 8) Extra dependencies
+python -m pip install zmq scikit-learn pyarrow fastparquet av
+```
 
 - Using a python interpreter that has Isaac Lab installed, install the library in editable mode using:
 
