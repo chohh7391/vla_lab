@@ -39,7 +39,6 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
             self._initialize_parquet_buffers()
             self._initialize_image_buffers()
 
-
     def _setup_scene(self):
         """Initialize simulation scene."""
         spawn_ground_plane(prim_path="/World/ground", cfg=GroundPlaneCfg(), translation=(0.0, 0.0, -1.05))
@@ -102,7 +101,7 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
         """Apply policy actions with smoothing."""
         # Save last actions for gr00t data logging
         self.last_actions = action.clone()
-        super()._pre_physics_step(action) # This changes action to smoothed action
+        super()._pre_physics_step(action)  # This changes action to smoothed action
 
     def _get_rewards(self):
         """Update rewards and compute success statistics."""
@@ -115,7 +114,7 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
         rew_buf = torch.where(curr_successes, 1.0, 0.0)
 
         return rew_buf
-    
+
     def _reset_idx(self, env_ids):
         """Perform additional randomizations."""
         super()._reset_idx(env_ids)
@@ -126,7 +125,7 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
                 video_dir=self.demo_save_cfg.video_dir,
             )
             self._initialize_parquet_buffers()
-    
+
     def _get_gr00t_observations(self):
         # This is for gr00t observations
 
@@ -139,7 +138,6 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
             "state.gripper_qpos": np.expand_dims(self.joint_pos[:, 7:9].cpu().numpy().astype(np.float64), axis=1),
         }
         return observations
-
 
     def _initialize_parquet_buffers(self):
         """Clears and initializes the data buffer for a specific environment."""
@@ -187,7 +185,7 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
             # Save Videos
             for camera_name, img_list in self.gr00t_img_buffers[env_id].items():
 
-                img_tensor = torch.stack(img_list, dim=0).to(device=self.device, dtype=torch.uint8) # (T, C, H, W)
+                img_tensor = torch.stack(img_list, dim=0).to(device=self.device, dtype=torch.uint8)  # (T, C, H, W)
 
                 gr00t_video_path = os.path.join(
                     video_dir[camera_name], f"episode_{env_id:06d}.mp4"
@@ -196,10 +194,9 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
 
                 write_video(gr00t_video_path, img_tensor, fps=int(1/self.step_dt), video_codec="h264")
 
-
         print(f"Saved {self.num_envs} episodes to {data_dir} and {video_dir}")
         print(f"number of frames: {len(self.gr00t_data_buffers[0]['observation.state'])}")
-        print(f"Exiting program after saving gr00t data...")
+        print("Exiting program after saving gr00t data...")
 
         # Quit Program
         sys.exit(0)
@@ -216,8 +213,8 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
 
         state = torch.cat((eef_position, eef_quaternion, gripper_qpos), dim=-1)
         arm_action = self.last_actions[:, :6]
-        gripper_action = torch.ones((self.num_envs, 1), device=self.device) # This Task forces gripper to be closed
-        action = torch.cat((arm_action, gripper_action), dim=-1) # rescale success_pred to [0, 1]
+        gripper_action = torch.ones((self.num_envs, 1), device=self.device)  # This Task forces gripper to be closed
+        action = torch.cat((arm_action, gripper_action), dim=-1)  # rescale success_pred to [0, 1]
 
         # Get Camera Datas -> # (num_envs, height, width, channel)
         left_camera_data = self._left_camera.data.output["rgb"].clone()
@@ -246,7 +243,7 @@ class FactoryGr00tDemoSaveEnv(FactoryEnv):
             else:
                 self.gr00t_data_buffers[i]["next.reward"].append(0.0)
             
-            if current_step_in_ep == self.max_episode_length - 2: # Final Step of episode
+            if current_step_in_ep == self.max_episode_length - 2:  # Final Step of episode
                 self.gr00t_data_buffers[i]["next.done"].append(True)
             else:
                 self.gr00t_data_buffers[i]["next.done"].append(False)

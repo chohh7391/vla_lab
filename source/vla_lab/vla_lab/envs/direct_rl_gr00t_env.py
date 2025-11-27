@@ -18,7 +18,6 @@ from isaaclab.envs.direct_rl_env_cfg import DirectRLEnvCfg
 from isaaclab.envs.direct_rl_env import DirectRLEnv
 
 from .utils.gr00t_service import AsyncExternalRobotInferenceClient
-import time
 
 
 class DirectRLGr00tEnv(DirectRLEnv):
@@ -32,7 +31,6 @@ class DirectRLGr00tEnv(DirectRLEnv):
 
         self.gr00t_actions: Dict[str, Any] | None = None
         self.processed_gr00t_actions: torch.Tensor | None = None
-
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[VecEnvObs, dict]:
         """Resets all the environments and returns observations.
@@ -77,7 +75,6 @@ class DirectRLGr00tEnv(DirectRLEnv):
 
         # return observations
         return self._get_observations(), self.extras
-    
 
     def step(self, action: torch.Tensor) -> VecEnvStepReturn:
         """Execute one time-step of the environment's dynamics.
@@ -136,7 +133,7 @@ class DirectRLGr00tEnv(DirectRLEnv):
             
         action = action.to(self.device)
         # add action noise
-        if self.cfg.action_noise_model: 
+        if self.cfg.action_noise_model:
             action = self._action_noise_model(action)
 
         # process actions
@@ -204,7 +201,6 @@ class DirectRLGr00tEnv(DirectRLEnv):
         # return observations, rewards, resets and extras
         return self.obs_buf, self.reward_buf, self.reset_terminated, self.reset_time_outs, self.extras
 
-    
     @abstractmethod
     def _get_gr00t_observations(self) -> Dict[str, Any]:
         """Compute and return the observations for the environment.

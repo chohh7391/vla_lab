@@ -41,17 +41,21 @@ class DemoSaveCfg:
         }
         self.data_dir = os.path.join(self.dataset_path, "data", self.chunk_id)
 
+
 @dataclass
 class DemoSavePegInsert(DemoSaveCfg):
     dataset_path: str = "/home/hyunho_RCI/datasets/gr00t-rl/factory/peg_insert"
+
 
 @dataclass
 class DemoSaveGearMesh(DemoSaveCfg):
     dataset_path: str = "/home/hyunho_RCI/datasets/gr00t-rl/factory/gear_mesh"
 
+
 @dataclass
 class DemoSaveNutThread(DemoSaveCfg):
     dataset_path: str = "/home/hyunho_RCI/datasets/gr00t-rl/factory/nut_thread"
+
 
 @configclass
 class FactoryGr00tEnvCfg(DirectRLEnvCfg):
