@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 import isaacsim.core.experimental.utils.stage as stage_utils
 import numpy as np
@@ -24,8 +24,57 @@ from isaacsim.core.experimental.prims import GeomPrim, RigidPrim
 from isaacsim.robot.manipulators.examples.franka.franka_experimental import FrankaExperimental
 from isaacsim.storage.native import get_assets_root_path
 from isaacsim.core.utils.numpy.maths import matmul
-from isaacsim.core.utils.numpy.rotations import quats_to_rot_matrices, rot_matrices_to_quats
+from isaacsim.core.utils.numpy.rotations import quats_to_rot_matrices, rot_matrices_to_quats, euler_angles_to_quats
+from isaacsim.sensors.camera import Camera
+import isaacsim.core.utils.numpy.rotations as rot_utils
 
+def convert_camera_frame_orientation_convention(
+    orientation: np.ndarray,
+    origin: Literal["opengl", "ros", "world"] = "opengl",
+    target: Literal["opengl", "ros", "world"] = "ros",
+) -> np.ndarray:
+    
+    if target == origin:
+        return orientation.copy()
+    
+    # -- unify input type
+    if origin == "ros":
+        # convert from ros to opengl convention
+        rotm = quats_to_rot_matrices(orientation)
+        rotm[:, 2] = -rotm[:, 2]
+        rotm[:, 1] = -rotm[:, 1]
+        # convert to opengl convention
+        quat_gl = rot_matrices_to_quats(rotm)
+    elif origin == "world":
+        # convert from world (x forward and z up) to opengl convention
+        rotm = quats_to_rot_matrices(orientation)
+        rotm = matmul(
+            rotm,
+            quats_to_rot_matrices(euler_angles_to_quats(np.array([np.pi / 2, -np.pi / 2, 0]), extrinsic=False))
+        )
+        quat_gl = rot_matrices_to_quats(rotm)
+    else:
+        quat_gl = orientation
+
+    # -- convert to target convention
+    if target == "ros":
+        # convert from opengl to ros convention
+        rotm = quats_to_rot_matrices(quat_gl)
+        rotm[:, 2] = -rotm[:, 2]
+        rotm[:, 1] = -rotm[:, 1]
+        return rot_matrices_to_quats(rotm)
+    elif target == "world":
+        # convert from opengl to world (x forward and z up) convention
+        rotm = quats_to_rot_matrices(quat_gl)
+        rotm = matmul(
+            rotm,
+            np.transpose(quats_to_rot_matrices(euler_angles_to_quats(np.array([np.pi / 2, -np.pi / 2, 0]), extrinsic=False)))
+        )
+        return rot_matrices_to_quats(rotm)
+    else:
+        return quat_gl.copy()
+
+    
 
 class FrankaPickPlace:
     """Simple, direct Franka pick-and-place controller.
@@ -105,6 +154,47 @@ class FrankaPickPlace:
         # Create the Franka robot controller (inherits from Articulation)
         self.robot = FrankaExperimental(robot_path="/World/robot", create_robot=True)
         self.end_effector_link = self.robot.end_effector_link
+
+        self.left_camera = Camera(
+            prim_path="/World/left_camera",
+            translation=np.array([0.9, 2.2, 0.8]),
+            orientation=convert_camera_frame_orientation_convention(
+                np.array([0.08338, 0.1194, 0.6, 0.7866]),
+                origin="opengl",
+                target="world"
+            ),
+            resolution=(256, 256),
+        )
+        self.right_camera = Camera(
+            prim_path="/World/right_camera",
+            translation=np.array([0.9, -2.2, 0.8]),
+            orientation=convert_camera_frame_orientation_convention(
+                np.array([0.7744, 0.61794, 0.08892, 0.10259]),
+                origin="opengl",
+                target="world"
+            ),
+            resolution=(256, 256),
+        )
+        self.wrist_camera = Camera(
+            prim_path="/World/robot/panda_hand/wrist_camera",
+            translation=np.array([0.05, 0.0, 0.0]),
+            orientation=convert_camera_frame_orientation_convention(
+                np.array([0.7032332, -0.0739128, -0.0739128, 0.7032332]),
+                origin="ros",
+                target="world"
+            ),
+            resolution=(256, 256),
+        )
+
+        for camera in [self.left_camera, self.right_camera, self.wrist_camera]:
+
+            camera.set_focal_length(24.0)
+            camera.set_focus_distance(400.0)
+            camera.set_horizontal_aperture(20.995)
+            camera.set_clipping_range(
+                near_distance=0.1,
+                far_distance=1.0e5
+            )
 
         # Add ground plane environment for physics simulation
         ground_plane = stage_utils.add_reference_to_stage(
@@ -289,6 +379,9 @@ class FrankaPickPlace:
         print("Resetting pick-and-place system...")
         self.reset_robot()
         self.reset_cube(position=cube_position, orientation=cube_orientation)
+        self.left_camera.initialize()
+        self.right_camera.initialize()
+        self.wrist_camera.initialize()
         print("Pick-and-place system reset complete")
 
     def reset_robot(self):
