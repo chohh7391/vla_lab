@@ -47,44 +47,21 @@ import os
 from torchvision.io import write_video
 import torch
 
+from vla_lab.envs.utils.gr00t_service import AsyncExternalRobotInferenceClient
 
-def save_gr00t_observations(
-    dataset_path: str, chunk_id: str, gr00t_data_buffers, gr00t_img_buffers, num_envs
+def get_gr00t_observation(
+    left_cam_data, right_cam_data, wrist_cam_data, eef_position, eef_orientation, gripper_qpos
 ):
-    data_dir = os.path.join(dataset_path, "data", chunk_id)
-    video_dir = {
-        "left_camera": os.path.join(dataset_path, "videos", chunk_id, "observation.images.left_view"),
-        "right_camera": os.path.join(dataset_path, "videos", chunk_id, "observation.images.right_view"),
-        "wrist_camera": os.path.join(dataset_path, "videos", chunk_id, "observation.images.wrist_view"),
+
+    observations = {
+        "video.left_view": left_cam_data.astype(np.uint8),
+        "video.right_view": right_cam_data.astype(np.uint8),
+        "video.wrist_view": wrist_cam_data.astype(np.uint8),
+        "state.eef_position": eef_position.astype(np.float64),
+        "state.eef_quaternion": eef_orientation.astype(np.float64),
+        "state.gripper_qpos": gripper_qpos.astype(np.float64),
     }
-
-    print(f"Saving data to {data_dir}...")
-
-    for env_id in range(num_envs):
-        # Save Parquet Data
-        # 데이터가 비어있지 않은지 확인
-        if len(gr00t_data_buffers[env_id]["observation.state"]) == 0:
-            print(f"Warning: Buffer for env_id {env_id} is empty. Skipping.")
-            continue
-
-        df = pd.DataFrame(gr00t_data_buffers[env_id])
-        gr00t_data_path = os.path.join(data_dir, f"episode_{env_id:06d}.parquet")
-        os.makedirs(os.path.dirname(gr00t_data_path), exist_ok=True)
-        df.to_parquet(gr00t_data_path, index=False)
-
-        # Save Videos
-        for camera_name, img_list in gr00t_img_buffers[env_id].items():
-
-            # (T, H, W, C) 형태로 저장되어 있으므로 그대로 stack
-            img_tensor = torch.stack(img_list, dim=0).to(device="cuda:0", dtype=torch.uint8)
-            
-            gr00t_video_path = os.path.join(video_dir[camera_name], f"episode_{env_id:06d}.mp4")
-            os.makedirs(os.path.dirname(gr00t_video_path), exist_ok=True)
-            
-            # write_video expects (T, H, W, C) for uint8 tensor
-            write_video(gr00t_video_path, img_tensor, fps=60, video_codec="h264")
-
-    print(f"Saved {num_envs} episodes.")
+    return observations
 
 
 def main():
@@ -102,36 +79,10 @@ def main():
     simulation_app.update()
 
     num_envs = args.num_envs
+
+    gr00t_chunk_size = 16
+    gr00t_policy = AsyncExternalRobotInferenceClient(host="localhost", port=5555)
     
-    # 버퍼 초기화
-    gr00t_data_buffers = [
-        {
-            "observation.state": [],
-            "action": [],
-            "timestamp": [],
-            "annotation.human.action.task_description": [],
-            "task_index": [],
-            "annotation.human.validity": [],
-            "episode_index": [],
-            "index": [],
-            "next.reward": [],
-            "next.done": [],
-        } for _ in range(num_envs)
-    ]
-
-    gr00t_img_buffers = [
-        {
-            "left_camera": [],
-            "right_camera": [],
-            "wrist_camera": [],
-        } for _ in range(num_envs)
-    ]
-
-    # 이전 상태 저장 변수 초기화
-    eef_position_prev = np.zeros(3)
-    eef_orientation_prev = np.array([0.0, 0.0, 0.0, 1.0])
-    gripper_qpos_prev = np.array([0])
-
     env_id = 0
     total_step = 0
     episode_step = 0
@@ -146,13 +97,6 @@ def main():
         if env_id >= num_envs:
             if not task_completed:
                 task_completed = True
-                save_gr00t_observations(
-                    dataset_path="/home/home/datasets/gr00t-rl/pick_place",
-                    chunk_id="chunk-000",
-                    gr00t_data_buffers=gr00t_data_buffers,
-                    gr00t_img_buffers=gr00t_img_buffers,
-                    num_envs=num_envs,
-                )
             break
 
         if SimulationManager.is_simulating():
@@ -196,12 +140,6 @@ def main():
             eef_orientation = np.squeeze(eef_orientation)
             gripper_qpos = pick_place.robot.get_dof_positions(dof_indices=[7, 8])[0]
             
-            current_time = np.round(timeline.get_current_time(), 3)
-            cube_position = pick_place.cube.get_world_poses()[0].numpy()
-            true_success = np.linalg.norm(place_position - cube_position) < 0.1
-            
-            # --- Get Images ---
-            # None 체크 및 복사
             left_rgb = pick_place.left_camera.get_rgb()
             left_cam_data = left_rgb.copy() if left_rgb is not None else np.zeros((256, 256, 3), dtype=np.uint8)
             
@@ -211,63 +149,21 @@ def main():
             wrist_rgb = pick_place.wrist_camera.get_rgb()
             wrist_cam_data = wrist_rgb.copy() if wrist_rgb is not None else np.zeros((256, 256, 3), dtype=np.uint8)
 
-            # --- Calculate Actions (Delta) ---
-            delta_pos_world = eef_position - eef_position_prev
-            action_pos = delta_pos_world / 0.2
+            gr00t_observation = get_gr00t_observation(
+                left_cam_data, right_cam_data, wrist_cam_data, eef_position, eef_orientation, gripper_qpos
+            )
 
-            # [중요] Isaac Sim(w,x,y,z) -> SciPy(x,y,z,w) 순서 변환
-            # eef_orientation이 [w, x, y, z]라고 가정 시:
-            quat_curr_scipy = eef_orientation[[1, 2, 3, 0]]
-            quat_prev_scipy = eef_orientation_prev[[1, 2, 3, 0]]
+            if total_step % gr00t_chunk_size == 0:
 
-            current_quat_obj = R.from_quat(quat_curr_scipy)      
-            prev_quat_obj = R.from_quat(quat_prev_scipy)    
+                gr00t_action = gr00t_policy.get_action_sync(gr00t_observation)
 
-            # World Frame 회전 차이 (Q_diff * Q_prev = Q_curr)
-            diff_quat_obj = current_quat_obj * prev_quat_obj.inv()
-
-            delta_rot_vec = diff_quat_obj.as_rotvec()
-            action_rot = delta_rot_vec / 0.097
-
-            state = np.concatenate((eef_position, eef_orientation, gripper_qpos), axis=-1)
-            arm_action = np.concatenate((action_pos, action_rot), axis=-1)
-            gripper_action = gripper_qpos_prev
-            prev_action = np.concatenate((arm_action, gripper_action), axis=-1)
-
-            is_done = pick_place.is_done()
-
-            # --- Data Appending ---
-            # 현재 env_id 버퍼에 저장
-            if env_id < num_envs:
-                buf = gr00t_data_buffers[env_id]
-                img_buf = gr00t_img_buffers[env_id]
-
-                buf["observation.state"].append(state.tolist())
-                buf["action"].append(prev_action.tolist())
-                buf["timestamp"].append(current_time)
-                buf["annotation.human.action.task_description"].append(0)
-                buf["task_index"].append(0)
-                buf["annotation.human.validity"].append(true_success)
-                buf["episode_index"].append(env_id)
-                buf["index"].append(total_step)
-                buf["next.reward"].append(1.0 if true_success else 0.0)
-                buf["next.done"].append(is_done)
-
-                # 이미지 저장 (H, W, C) 형태 그대로 유지 -> 나중에 write_video가 처리
-                img_buf["left_camera"].append(torch.from_numpy(left_cam_data))
-                img_buf["right_camera"].append(torch.from_numpy(right_cam_data))
-                img_buf["wrist_camera"].append(torch.from_numpy(wrist_cam_data))
-
-            # --- Update Prev State ---
-            eef_position_prev = eef_position
-            eef_orientation_prev = eef_orientation
-            gripper_qpos_prev = gripper_qpos
+            #######################
             
             total_step += 1
             episode_step += 1
             
             # --- Check Episode End ---
-            if is_done:
+            if pick_place.is_done():
                 print(f"Episode {env_id} Completed.")
                 env_id += 1        # 다음 에피소드로 인덱스 변경
                 reset_needed = True # 리셋 플래그 설정 (다음 루프에서 리셋 실행)

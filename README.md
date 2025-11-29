@@ -242,6 +242,16 @@ python scripts/gr00t_finetune.py \
    --video-backend torchvision_av
 ```
 
+- with huggingface
+```bash
+python scripts/gr00t_finetune.py    --dataset-path /home/hyunho_RCI/datasets/gr00t-rl/pick_place/    --num-gpus 1    --batch-size 32    --output-dir /home/hyunho_RCI/Isaac-GR00T/checkpoints/pick_place     --max-steps 20000    --embodiment-tag franka    --data-config franka_triple_cam    --video-backend torchvision_av --push_to_hub --hub_model_id bhe1004/pick_place
+```
+
+- eval finetuning model
+```bash
+python scripts/eval_policy.py --plot    --embodiment_tag new_embodiment    --model_path  bhe1004/pick_place    --data_config franka_triple_cam  --embodiment_tag franka  --dataset_path /home/hyunho_RCI/datasets/gr00t-rl/pick_place/    --video_backend decord    --modality_keys eef_position_delta eef_rotation_delta gripper_close --save_plot_path /home/hyunho_RCI/Isaac-GR00T/plots/pick_place/eef_pose.png
+```
+
 
 ## 3. Train VLA-RL Policy
 
@@ -267,4 +277,11 @@ python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-GearMesh-Direct-v
 
 ```
 python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-nut_thread --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
+```
+
+## 4. Pick & Place
+- save demo
+```bash
+conda activate vla_lab
+python source/vla_lab/vla_lab/tasks/direct/vla/gr00t/pick_place/standalone.py
 ```
