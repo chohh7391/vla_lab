@@ -283,5 +283,9 @@ python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Direct-
 - save demo
 ```bash
 conda activate vla_lab
-python source/vla_lab/vla_lab/tasks/direct/vla/gr00t/pick_place/standalone.py
+python source/vla_lab/vla_lab/tasks/direct/vla/gr00t/pick_place/save_demo.py --headless --num_envs 128
+```
+
+```bash
+python source/vla_lab/vla_lab/tasks/direct/vla/gr00t/pick_place/eval.py --num_envs 16
 ```
