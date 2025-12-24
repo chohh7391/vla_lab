@@ -12,13 +12,13 @@ This repository is a framework that uses a VLA model as a backbone to improve su
 
 ```bash
 # 1) Conda env
-conda create -n wheel_leg_humanoid_lab python=3.11
-conda activate wheel_leg_humanoid_lab
+conda create -n vla_lab python=3.11
+conda activate vla_lab
 
 # 2) Clone the repo
 cd $HOME
-git clone https://github.com/chohh7391/wheel_leg_humanoid_lab.git
-cd wheel_leg_humanoid_lab
+git clone https://github.com/chohh7391/vla_lab.git
+cd vla_lab
 
 # 3) Isaac Sim SDK (v5.1.0)
 pip install --upgrade pip
@@ -36,7 +36,7 @@ sudo apt install -y cmake build-essential
 python _isaaclab/scripts/tutorials/00_sim/create_empty.py --headless
 
 # 7) Dev install
-python -m pip install -e source/wheel_leg_humanoid_lab
+python -m pip install -e source/vla_lab
 
 # 8) Extra dependencies
 python -m pip install zmq scikit-learn pyarrow fastparquet av
