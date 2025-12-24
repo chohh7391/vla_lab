@@ -42,12 +42,6 @@ python -m pip install -e source/vla_lab
 python -m pip install zmq scikit-learn pyarrow fastparquet av
 ```
 
-- Using a python interpreter that has Isaac Lab installed, install the library in editable mode using:
-
-    ```bash
-    # use 'PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-    python -m pip install -e source/vla_lab
-
 - Verify that the extension is correctly installed by:
 
     - Listing the available tasks:
