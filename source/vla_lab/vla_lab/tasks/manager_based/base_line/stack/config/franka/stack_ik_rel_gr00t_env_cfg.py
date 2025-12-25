@@ -119,15 +119,16 @@ class ObservationsCfg:
         # For Gr00t
         state = ObsTerm(func=gr00t_obs.state) # ee_pose + gripper_qpos = 9
         action = ObsTerm(func=mdp.last_action)
-        timestamp = ObsTerm(func=mdp.current_time_s)
-        task_description = ObsTerm(func=gr00t_obs.task_description)
-        task_index = ObsTerm(func=gr00t_obs.task_index)
         validity = ObsTerm(func=mdp.cubes_stacked)
-        # episode_index = ObsTerm(func=gr00t_obs.episode_index)
-        # index = ObsTerm(func=gr00t_obs.index)
         next_reward = ObsTerm(func=gr00t_obs.next_reward)
         next_done = ObsTerm(func=gr00t_obs.next_done)
-
+        # timestamp = ObsTerm(func=mdp.current_time_s)
+        # task_description = ObsTerm(func=gr00t_obs.task_description)
+        # task_index = ObsTerm(func=gr00t_obs.task_index)
+        
+        # episode_index = ObsTerm(func=gr00t_obs.episode_index)
+        # index = ObsTerm(func=gr00t_obs.index)
+        
         left_camera = ObsTerm(
             func=mdp.image, params={"sensor_cfg": SceneEntityCfg("left_camera"), "data_type": "rgb", "normalize": False}
         )
