@@ -112,6 +112,11 @@ class ObservationsCfg:
     class PolicyCfg(ObsGroup):
         """Observations for policy group with state values."""
 
+        # For Augmentation
+        eef_pos = ObsTerm(func=mdp.ee_frame_pos)
+        eef_quat = ObsTerm(func=mdp.ee_frame_quat)
+        
+        # For Gr00t
         state = ObsTerm(func=gr00t_obs.state) # ee_pose + gripper_qpos = 9
         action = ObsTerm(func=mdp.last_action)
         timestamp = ObsTerm(func=mdp.current_time_s)

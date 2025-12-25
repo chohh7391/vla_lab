@@ -56,10 +56,12 @@ def next_reward(
 ) -> torch.Tensor:
     
     success = mdp.cubes_stacked(env)
-    if success:
-        return torch.ones((env.num_envs, 1))
-    else:
-        return torch.zeros((env.num_envs, 1))
+    next_reward = torch.where(
+        success, torch.ones((env.num_envs, 1)), torch.zeros((env.num_envs, 1))
+    )
+
+    return next_reward
+
 
 
 def next_done(
@@ -67,8 +69,8 @@ def next_done(
 ) -> torch.Tensor:
     
     is_last_step = env.episode_length_buf.unsqueeze(1) == env.max_episode_length_s - 1
+    next_done = torch.where(
+        is_last_step, torch.ones((env.num_envs, 1), dtype=torch.bool), torch.zeros((env.num_envs, 1), dtype=torch.bool)
+    )
     
-    if is_last_step:
-        return torch.ones((env.num_envs, 1), dtype=torch.bool)
-    else:
-        return torch.zeros((env.num_envs, 1), dtype=torch.bool)
+    return next_done

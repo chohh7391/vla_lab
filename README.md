@@ -224,16 +224,32 @@ pip install --no-build-isolation flash-attn==2.7.1.post4
 
 - Train gr00t model
 
-```
+```bash
 python scripts/gr00t_finetune.py \
-   --dataset-path <DEMO_DATA_PATH> \
-   --num-gpus 1 \
-   --batch-size 32 \
-   --output-dir <OUTPUT_DIR>  \
-   --max-steps 20000 \
-   --embodiment-tag franka \
-   --data-config franka_triple_cam \
-   --video-backend torchvision_av
+    --dataset-path /home/hyunho_RCI/datasets/gr00t-rl/<TASK_NAME>/ \
+    --num-gpus 1 \
+    --batch-size 32 \
+    --output-dir /home/hyunho_RCI/Isaac-GR00T/checkpoints/<TASK_NAME> \
+    --max-steps 20000 \
+    --embodiment-tag franka \
+    --data-config franka_triple_cam \
+    --video-backend torchvision_av \
+    --push_to_hub \
+    --hub_model_id bhe1004/<TASK_NAME>
+```
+
+- Eval gr00t model
+```bash
+python scripts/eval_policy.py \
+    --plot \
+    --embodiment_tag franka \
+    --model_path  bhe1004/<TASK_NAME> \
+    --data_config franka_triple_cam \
+    --embodiment_tag franka \
+    --dataset_path /home/hyunho_RCI/datasets/gr00t-rl/<TASK_NAME>/ \
+    --video_backend decord \
+    --modality_keys eef_position_delta eef_rotation_delta gripper_close \
+    --save_plot_path /home/hyunho_RCI/Isaac-GR00T/plots/<TASK_NAME>/eef_pose.png
 ```
 
 
@@ -261,4 +277,33 @@ python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-GearMesh-Direct-v
 
 ```
 python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-nut_thread --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
+```
+
+
+# Log
+
+- transfer isaaclab demos to gr00t dataset
+```bash
+python datasets/gr00t-rl/utils/hdf5_to_gr00t_demo.py
+```
+
+- record demos
+```bash
+python scripts/tools/record_demos.py --task VlaLab-BaseLine-Stack-IK-Rel-Gr00t-v0 --device cpu --teleop_device keyboard --dataset_file ./datasets/dataset.hdf5 --num_demos 10 --enable_cameras
+```
+
+- replay demos
+```bash
+python scripts/tools/replay_demos.py --task VlaLab-BaseLine-Stack-IK-Rel-Gr00t-v0 --device cpu --dataset_file ./datasets/dataset.hdf5 --enable_cameras
+```
+
+- augment dataset
+```bash
+# annotate
+python scripts/imitation_learning/isaaclab_mimic/annotate_demos.py --device cpu --enable_cameras --task VlaLab-BaseLine-Stack-IK-Rel-Gr00t-Mimic-v0 --auto --input_file ./datasets/dataset.hdf5 --output_file ./datasets/annotated_dataset.hdf5
+
+# augment
+python scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
+--device cpu --enable_cameras --headless --num_envs 10 --generation_num_trials 1000 \
+--input_file ./datasets/annotated_dataset.hdf5 --output_file ./datasets/generated_dataset.hdf5
 ```

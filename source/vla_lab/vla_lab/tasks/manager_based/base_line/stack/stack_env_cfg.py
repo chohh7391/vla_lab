@@ -61,6 +61,7 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
 ##
 # MDP settings
 ##
+
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
