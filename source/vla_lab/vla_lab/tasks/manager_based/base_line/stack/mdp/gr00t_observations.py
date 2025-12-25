@@ -63,7 +63,6 @@ def next_reward(
     return next_reward
 
 
-
 def next_done(
     env: ManagerBasedRLEnv,
 ) -> torch.Tensor:
