@@ -62,6 +62,12 @@ parser.add_argument(
     default=False,
     help="Enable Pinocchio.",
 )
+parser.add_argument(
+    "--low_pass_filter",
+    action="store_true",
+    default=False,
+    help="Apply low pass filter to teleoperation action"
+)
 
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
@@ -115,7 +121,7 @@ from isaaclab.envs.mdp.recorders.recorders_cfg import ActionStateRecorderManager
 from isaaclab.envs.ui import EmptyWindow
 from isaaclab.managers import DatasetExportMode
 
-import isaaclab_tasks  # noqa: F401
+# import isaaclab_tasks  # noqa: F401
 import vla_lab.tasks  # noqa: F401
 from isaaclab_tasks.utils.parse_cfg import parse_env_cfg
 
@@ -416,6 +422,7 @@ def run_simulation_loop(
     success_step_count = 0
     should_reset_recording_instance = False
     running_recording_instance = not args_cli.xr
+    applying_low_pass_filter = args_cli.low_pass_filter
 
     # Callback closures for the teleop device
     def reset_recording_instance():
@@ -453,11 +460,26 @@ def run_simulation_loop(
     instruction_display = setup_ui(label_text, env)
 
     subtasks = {}
+    prev_action = None
+    filter_alpha = 0.2
 
     with contextlib.suppress(KeyboardInterrupt) and torch.inference_mode():
         while simulation_app.is_running():
             # Get keyboard command
             action = teleop_interface.advance()
+
+            # apply low pass filter to action
+            if applying_low_pass_filter:
+                if prev_action is None:
+                    # 첫 실행 시 초기화 (튀는 현상 방지)
+                    prev_action = action
+                else:
+                    # LPF: y[n] = alpha * x[n] + (1 - alpha) * y[n-1]
+                    action = filter_alpha * action + (1 - filter_alpha) * prev_action
+                    
+                # 다음 스텝을 위해 현재의 필터링된 값을 저장
+                prev_action = action
+
             # Expand to batch dimension
             actions = action.repeat(env.num_envs, 1)
 

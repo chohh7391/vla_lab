@@ -289,7 +289,7 @@ python datasets/gr00t-rl/utils/hdf5_to_gr00t_demo.py
 
 - record demos
 ```bash
-python scripts/tools/record_demos.py --task VlaLab-BaseLine-Stack-IK-Rel-Gr00t-v0 --device cpu --teleop_device keyboard --dataset_file ./datasets/dataset.hdf5 --num_demos 10 --enable_cameras
+python scripts/tools/record_demos.py --task VlaLab-BaseLine-Stack-IK-Rel-Gr00t-v0 --device cpu --teleop_device keyboard --dataset_file ./datasets/dataset.hdf5 --num_demos 10 --enable_cameras --low_pass_filter
 ```
 
 - replay demos
@@ -300,7 +300,7 @@ python scripts/tools/replay_demos.py --task VlaLab-BaseLine-Stack-IK-Rel-Gr00t-v
 - augment dataset
 ```bash
 # annotate
-python scripts/imitation_learning/isaaclab_mimic/annotate_demos.py --device cpu --enable_cameras --task VlaLab-BaseLine-Stack-IK-Rel-Gr00t-Mimic-v0 --auto --input_file ./datasets/dataset.hdf5 --output_file ./datasets/annotated_dataset.hdf5
+python scripts/imitation_learning/isaaclab_mimic/annotate_demos.py --device cpu --enable_cameras --task VlaLab-BaseLine-Stack-IK-Rel-Gr00t-Mimic-v0 --auto --input_file ./datasets/dataset.hdf5 --output_file ./datasets/annotated_dataset.hdf5 --headless
 
 # augment
 python scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
