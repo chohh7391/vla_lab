@@ -105,23 +105,22 @@ def convert_to_gr00t_fixed_physics(h5_path, output_base_dir, start_ep_idx, fps=3
 
 if __name__ == "__main__":
     # 통합 저장 경로
-    final_output_dir = '/home/home/vla_lab/datasets/gr00t-rl/cube_stack'
+    final_output_dir = '/datasets/vla_rl/base_line/cube_stack/lerobot'
     total_episodes_processed = 0
     
-    for i in range(13):
-        h5_file_path = f'/home/home/vla_lab/datasets/cube_stack/{(i * 10):03d}.hdf5'
+    h5_file_path = '/datasets/vla_rl/base_line/cube_stack/hdf5/generated_dataset.hdf5'
         
-        # 파일이 존재하는지 확인
-        if os.path.exists(h5_file_path):
-            # 처리된 에피소드 수를 누적하여 다음 파일의 시작 인덱스로 사용
-            num_processed = convert_to_gr00t_fixed_physics(
-                h5_path=h5_file_path,
-                output_base_dir=final_output_dir,
-                start_ep_idx=total_episodes_processed,
-                fps=60, 
-                max_length=350
-            )
-            total_episodes_processed += num_processed
-            print(f"현재까지 총 {total_episodes_processed}개 에피소드 변환 완료.")
+    # 파일이 존재하는지 확인
+    if os.path.exists(h5_file_path):
+        # 처리된 에피소드 수를 누적하여 다음 파일의 시작 인덱스로 사용
+        num_processed = convert_to_gr00t_fixed_physics(
+            h5_path=h5_file_path,
+            output_base_dir=final_output_dir,
+            start_ep_idx=total_episodes_processed,
+            fps=60, 
+            max_length=350
+        )
+        total_episodes_processed += num_processed
+        print(f"현재까지 총 {total_episodes_processed}개 에피소드 변환 완료.")
 
     print(f"\n✨ 모든 변환이 완료되었습니다. 총 {total_episodes_processed}개 에피소드 저장됨.")
