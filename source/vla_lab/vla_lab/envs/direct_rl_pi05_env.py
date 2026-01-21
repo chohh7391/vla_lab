@@ -17,20 +17,20 @@ from isaaclab.envs.common import VecEnvObs, VecEnvStepReturn
 from isaaclab.envs.direct_rl_env_cfg import DirectRLEnvCfg
 from isaaclab.envs.direct_rl_env import DirectRLEnv
 
-from .utils.gr00t_service import AsyncGr00tInferenceClient
+from .utils.pi05_service import AsyncPi05InferenceClient
 
 
-class DirectRLGr00tEnv(DirectRLEnv):
+class DirectRLPi05Env(DirectRLEnv):
 
     def __init__(self, cfg: DirectRLEnvCfg, render_mode: str | None = None, **kwargs):
         super().__init__(cfg=cfg, render_mode=render_mode, **kwargs)
 
-        self.gr00t_chunk_size = 16
-        self.gr00t_policy = AsyncGr00tInferenceClient(host="localhost", port=5556)
-        print("Initialize Gr00t Client Node")
+        self.pi05_chunk_size = 8
+        self.pi05_policy = AsyncPi05InferenceClient(host="127.0.0.1", port=8000)
+        print("Initialize pi05 Client Node")
 
-        self.gr00t_actions: Dict[str, Any] | None = None
-        self.processed_gr00t_actions: torch.Tensor | None = None
+        self.pi05_actions: Dict[str, Any] | None = None
+        self.processed_pi05_actions: torch.Tensor | None = None
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[VecEnvObs, dict]:
         """Resets all the environments and returns observations.
@@ -69,9 +69,10 @@ class DirectRLGr00tEnv(DirectRLEnv):
             while SimulationManager.assets_loading():
                 self.sim.render()
 
-        # Call Initial Gr00t Action
-        gr00t_observations: Dict[str, Any] = self._get_gr00t_observations()
-        self.gr00t_actions = self.gr00t_policy.get_action_sync(gr00t_observations)
+        # Call Initial pi05 Action
+        pi05_observations: Dict[str, Any] = self._get_pi05_observations()
+        self.pi05_actions = self.pi05_policy.get_action_sync(pi05_observations)
+        self.processed_pi05_actions = self._parse_pi05_actions(self.pi05_actions)
 
         # return observations
         return self._get_observations(), self.extras
@@ -100,35 +101,59 @@ class DirectRLGr00tEnv(DirectRLEnv):
         Returns:
             A tuple containing the observations, rewards, resets (terminated and truncated) and extras.
         """
-        # if self.episode_length_buf[0].item() == 0:
-        #     self.stime = time.time()
 
-        if self.episode_length_buf[0] % self.gr00t_chunk_size == 0:
+        if self.episode_length_buf[0] % self.pi05_chunk_size == 0:
 
             if self.episode_length_buf[0].item() != 0: # First Step after reset
                 try:
-                    self.gr00t_actions = self.gr00t_policy.get_result()
+                    self.pi05_actions = self.pi05_policy.get_result()
                 except Exception as e:
-                    print(f"Error getting Gr00t action: {e}")
-                    self.gr00t_actions = torch.zeros((self.num_envs, self.gr00t_chunk_size, 6), device=self.device)
+                    print(f"Error getting pi05 action: {e}")
+                    self.pi05_actions = torch.zeros((self.num_envs, self.pi05_chunk_size, 6), device=self.device)
 
-            groot_actions_pos = torch.tensor(self.gr00t_actions["action.eef_position_delta"], dtype=torch.float32, device=self.device)
-            groot_actions_rot = torch.tensor(self.gr00t_actions["action.eef_rotation_delta"], dtype=torch.float32, device=self.device)
-            groot_actions_delta_pose = torch.cat(
-                (groot_actions_pos, groot_actions_rot), dim=-1
+            pi05_actions_pos = torch.tensor(self.pi05_actions["action.eef_position_delta"], dtype=torch.float32, device=self.device)
+            pi05_actions_rot = torch.tensor(self.pi05_actions["action.eef_rotation_delta"], dtype=torch.float32, device=self.device)
+            pi05_actions_delta_pose = torch.cat(
+                (pi05_actions_pos, pi05_actions_rot), dim=-1
             )
 
-            self.processed_gr00t_actions = groot_actions_delta_pose # [64, 16, 6]
+            self.processed_pi05_actions = pi05_actions_delta_pose # [64, 16, 6]
 
-            # forge env contain predicition of sucess, so we expand gr00t actions to match the num envs
-            if self.action_space.shape[-1] != self.processed_gr00t_actions.shape[-1]:
-                self.processed_gr00t_actions = torch.cat(
-                    (self.processed_gr00t_actions, torch.zeros((self.num_envs, self.gr00t_chunk_size, 1), device=self.device)), dim=-1
+            # forge env contain predicition of sucess, so we expand pi05 actions to match the num envs
+            if self.action_space.shape[-1] != self.processed_pi05_actions.shape[-1]:
+                self.processed_pi05_actions = torch.cat(
+                    (self.processed_pi05_actions, torch.zeros((self.num_envs, self.pi05_chunk_size, 1), device=self.device)), dim=-1
                 )
 
-        elif self.episode_length_buf[0] % self.gr00t_chunk_size == 8:
+        elif self.episode_length_buf[0] % self.pi05_chunk_size == (self.pi05_chunk_size // 2):
             
-            self.gr00t_policy.request_action(self._get_gr00t_observations())
+            self.pi05_policy.request_action(self._get_pi05_observations())
+
+        t = int(self.episode_length_buf[0].item())
+        chunk_idx = t % self.pi05_chunk_size
+
+        # ------------------------------------------------------
+        # 1) chunk 시작 지점: 이전에 prefetch한 결과 수령
+        # ------------------------------------------------------
+        if chunk_idx == 0:
+
+            if t != 0:  # reset 직후(t=0)는 이미 sync infer 완료
+                try:
+                    self.pi05_actions = self.pi05_policy.get_result()
+                except Exception as e:
+                    print(f"Error getting pi05 action: {e}")
+                    self.pi05_actions = None  # 안전한 fallback
+
+            # pi05 server output(dict)을
+            # (num_envs, chunk_size, action_dim_env) tensor로 변환
+            self.processed_pi05_actions = self._parse_pi05_actions(self.pi05_actions)
+
+        # ------------------------------------------------------
+        # 2) chunk 중간 지점: 다음 chunk prefetch
+        # ------------------------------------------------------
+        elif chunk_idx == (self.pi05_chunk_size // 2):
+
+            self.pi05_policy.request_action(self._get_pi05_observations())
 
             
         action = action.to(self.device)
@@ -138,7 +163,7 @@ class DirectRLGr00tEnv(DirectRLEnv):
 
         # process actions
         # self._pre_physics_step(action)
-        self._pre_physics_step(action + self.processed_gr00t_actions[:, self.episode_length_buf[0] % self.gr00t_chunk_size, :])
+        self._pre_physics_step(action + self.processed_pi05_actions[:, self.episode_length_buf[0] % self.pi05_chunk_size, :])
 
         # check if we need to do rendering within the physics loop
         # note: checked here once to avoid multiple checks within the loop
@@ -200,12 +225,68 @@ class DirectRLGr00tEnv(DirectRLEnv):
 
         # return observations, rewards, resets and extras
         return self.obs_buf, self.reward_buf, self.reset_terminated, self.reset_time_outs, self.extras
+    
+    def _parse_pi05_actions(self, out: Dict[str, Any]) -> torch.Tensor:
+        """
+        pi05 output:
+        out["actions"]: (B, H, 7)
+            [dx, dy, dz, dRx, dRy, dRz, gripper]
+        """
+        # ---------- constants (조절 가능) ----------
+        POS_SCALE = 0.01    # meters
+        ROT_SCALE = 0.05    # radians
+        # ------------------------------------------
+
+        if out is None or "actions" not in out:
+            base = torch.zeros(
+                (self.num_envs, self.pi05_chunk_size, self.action_space.shape[-1]),
+                device=self.device,
+            )
+            return base
+
+        actions = torch.as_tensor(
+            out["actions"],
+            device=self.device,
+            dtype=torch.float32,
+        )  # (B, H, 7)
+
+        B, H, D = actions.shape
+
+        # --- horizon 맞추기 ---
+        if H < self.pi05_chunk_size:
+            pad = torch.zeros((B, self.pi05_chunk_size - H, D), device=self.device)
+            actions = torch.cat([actions, pad], dim=1)
+        elif H > self.pi05_chunk_size:
+            actions = actions[:, : self.pi05_chunk_size, :]
+
+        # --- batch 맞추기 ---
+        if B == 1:
+            actions = actions.expand(self.num_envs, -1, -1)
+        elif B != self.num_envs:
+            actions = actions[: self.num_envs]
+
+        # --- scaling ---
+        # actions[..., 0:3] *= POS_SCALE
+        # actions[..., 3:6] *= ROT_SCALE
+
+        # --- env action dim 맞추기 ---
+        act_dim_env = self.action_space.shape[-1]
+        if actions.shape[-1] < act_dim_env:
+            pad = torch.zeros(
+                (self.num_envs, self.pi05_chunk_size, act_dim_env - actions.shape[-1]),
+                device=self.device,
+            )
+            actions = torch.cat([actions, pad], dim=-1)
+        elif actions.shape[-1] > act_dim_env:
+            actions = actions[..., :act_dim_env]
+
+        return actions
 
     @abstractmethod
-    def _get_gr00t_observations(self) -> Dict[str, Any]:
+    def _get_pi05_observations(self) -> Dict[str, Any]:
         """Compute and return the observations for the environment.
 
         Returns:
             The observations for the environment.
         """
-        raise NotImplementedError(f"Please implement the '_get_gr00t_observations' method for {self.__class__.__name__}.")
+        raise NotImplementedError(f"Please implement the '_get_pi05_observations' method for {self.__class__.__name__}.")

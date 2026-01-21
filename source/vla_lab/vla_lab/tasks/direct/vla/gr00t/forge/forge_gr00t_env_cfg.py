@@ -24,7 +24,7 @@ STATE_DIM_CFG.update({"force_threshold": 1, "ft_force": 3})
 @dataclass
 class DemoSaveCfg:
 
-    dataset_path: str = "/home/hyunho_RCI/datasets/gr00t-rl/forge"
+    dataset_path: str = "/home/hyunho_RCI/datasets/gr00t-rl/forge/peg_insert"
     chunk_id: str = "chunk-000"
 
     video_dir: dict = field(init=False)

@@ -8,7 +8,7 @@ import torch
 from vla_lab.tasks.direct.base_line.factory import factory_utils
 from vla_lab.tasks.direct.base_line.forge import forge_utils
 from vla_lab.tasks.direct.vla.gr00t.forge.base.forge_env import ForgeEnv
-from vla_lab.tasks.direct.vla.gr00t.forge.forge_gr00t_env_cfg import ForgeGr00tEnvCfg
+from vla_lab.tasks.direct.vla.pi05.forge.forge_pi05_env_cfg import ForgePi05EnvCfg
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
@@ -16,13 +16,12 @@ from isaaclab.sim.spawners.from_files import GroundPlaneCfg, spawn_ground_plane
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
 from isaaclab.sensors import TiledCamera
-import torch.nn.functional as F
 
 
-class ForgeGr00tEnv(ForgeEnv):
-    cfg: ForgeGr00tEnvCfg
+class ForgePi05Env(ForgeEnv):
+    cfg: ForgePi05EnvCfg
 
-    def __init__(self, cfg: ForgeGr00tEnvCfg, render_mode: str | None = None, **kwargs):
+    def __init__(self, cfg: ForgePi05EnvCfg, render_mode: str | None = None, **kwargs):
         """Initialize additional randomization and logging tensors."""
         super().__init__(cfg, render_mode, **kwargs)
 
@@ -96,69 +95,42 @@ class ForgeGr00tEnv(ForgeEnv):
         noisy_force = force_sensor_smooth[:, 0:3] + force_noise
 
         return noisy_force, force_sensor_smooth[:, 0:3]
-
-
+    
     def get_sparse_rewards(self) -> torch.Tensor:
-        """
-        Reward structure (paper-aligned):
-            r = r_s + r_penalty + r_shaping
-            r_s        : sparse success reward
-            r_penalty  : -alpha * max(0, ||F|| - F_limit)
-            r_shaping  : lambda_f * (gamma * phi(s_{t+1}) - phi(s_t))
-            phi(s)     : -log(c_f * max(0, ||F|| - F_limit) + 1)
-            gamma      : fixed to 0.995
-        """
-        # ------------------------------------------------------------
-        # Initialize reward buffer
-        # ------------------------------------------------------------
-        rew_buf = torch.zeros(
-            self.num_envs, dtype=torch.float32, device=self.device
-        )
-        # ============================================================
-        # (1) Success reward: r_s
-        # ============================================================
+        
+        rew_buf = torch.zeros(self.num_envs, dtype=torch.float32, device=self.device)
+        rew_dict, rew_scales = {}, {}
+
+        # Calculate action penalty for the asset-relative action space.
+        pos_error = torch.norm(self.delta_pos, p=2, dim=-1) / self.cfg.ctrl.pos_action_threshold[0]
+        rot_error = torch.abs(self.delta_yaw) / self.cfg.ctrl.rot_action_threshold[0]
+        # Contact penalty.
+        noisy_force, force_sensor_smooth = self.get_ft_force()
+        contact_force = torch.norm(force_sensor_smooth[:, 0:3], p=2, dim=-1, keepdim=False)
+        contact_penalty = torch.nn.functional.relu(contact_force - self.contact_penalty_thresholds)
+        # Add success prediction rewards.
         check_rot = self.cfg_task.name == "nut_thread"
         curr_successes = self._get_curr_successes(
-            success_threshold=self.cfg_task.success_threshold,
-            check_rot=check_rot,
-        )
-        r_s = curr_successes.float()
-        # ============================================================
-        # (2) Contact force penalty: r_penalty
-        #     r_penalty = -alpha * max(0, ||F|| - F_limit)
-        # ============================================================
-        _, force_sensor_smooth = self.get_ft_force()
-        contact_force = torch.norm(
-            force_sensor_smooth[:, 0:3], p=2, dim=-1
+            success_threshold=self.cfg_task.success_threshold, check_rot=check_rot
         )
 
-        F_limit = self.contact_penalty_thresholds
-        contact_over = F.relu(contact_force - F_limit)
-        alpha = getattr(self.cfg_task, "contact_penalty_alpha", None)
-        if alpha is None:
-            alpha = getattr(self.cfg_task, "contact_penalty_scale", 1.0)
-        r_penalty = -alpha * contact_over
-        # ============================================================
-        # (3) Potential-based shaping: r_shaping
-        #     r_shaping = lambda_f * (gamma * phi(s_{t+1}) - phi(s_t))
-        # ============================================================
-        gamma = 0.995  # FIXED as requested
-        lambda_f = getattr(self.cfg_task, "force_shaping_lambda", 0.0)
-        c_f = getattr(self.cfg_task, "force_potential_c", 1.0)
-        # phi(s_{t+1})
-        phi_curr = -torch.log(c_f * contact_over + 1.0)
-        # shaping reward
-        r_shaping = lambda_f * (gamma * phi_curr - self._prev_phi_f)
-        # update buffer for next step
-        self._prev_phi_f = phi_curr.detach()
-        # ============================================================
-        # (4) Total reward
-        # ============================================================
-        rew_buf += r_s
-        rew_buf += r_penalty
-        rew_buf += r_shaping
+        rew_dict = {
+            "curr_success": curr_successes.float(),
+            # "action_penalty_asset": pos_error + rot_error,
+            # "contact_penalty": contact_penalty,
+        }
+        rew_scales = {
+            "curr_success": 1.0,
+            # "action_penalty_asset": -self.cfg_task.action_penalty_asset_scale,
+            # "contact_penalty": -self.cfg_task.contact_penalty_scale,
+        }
+
+        for rew_name in rew_dict.keys():
+            rew = rew_dict[rew_name] * rew_scales[rew_name]
+            rew_buf += rew
+
         return rew_buf
-
+        
 
     def _get_observations(self):
         """Add additional FORGE observations."""
@@ -192,15 +164,55 @@ class ForgeGr00tEnv(ForgeEnv):
         return {"policy": obs_tensors, "critic": state_tensors}
 
 
-    def _get_gr00t_observations(self):
-        # This is for gr00t observations
+    # def _get_pi05_observations(self):
+    #     # This is for pi05 observations
 
+    #     observations = {
+    #         "video.left_view": np.expand_dims(self._left_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
+    #         "video.right_view": np.expand_dims(self._right_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
+    #         "video.wrist_view": np.expand_dims(self._wrist_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
+    #         "state.eef_position": np.expand_dims(self.fingertip_midpoint_pos.cpu().numpy().astype(np.float64), axis=1),
+    #         "state.eef_quaternion": np.expand_dims(self.fingertip_midpoint_quat.cpu().numpy().astype(np.float64), axis=1),
+    #         "state.gripper_qpos": np.expand_dims(self.joint_pos[:, 7:9].cpu().numpy().astype(np.float64), axis=1),
+    #     }
+    #     return observations
+    def _get_pi05_observations(self):
+        """
+        Build observations in the exact format expected by OpenPI Franka policy.
+        """
+
+        # -------------------------------------------------
+        # Images: IsaacLab -> OpenPI
+        # IsaacLab rgb: (B, H, W, 3), uint8
+        # -------------------------------------------------
+        left_view = self._left_camera.data.output["rgb"].cpu().numpy().astype(np.uint8)
+        right_view = self._right_camera.data.output["rgb"].cpu().numpy().astype(np.uint8)
+        wrist_view = self._wrist_camera.data.output["rgb"].cpu().numpy().astype(np.uint8)
+
+        # -------------------------------------------------
+        # State: concatenate into a single 9D vector
+        #   [eef_pos(3), eef_quat(4), gripper_qpos(2)]
+        # -------------------------------------------------
+        eef_pos = self.fingertip_midpoint_pos.cpu().numpy().astype(np.float32)      # (B, 3)
+        eef_quat = self.fingertip_midpoint_quat.cpu().numpy().astype(np.float32)    # (B, 4)
+        gripper_qpos = self.joint_pos[:, 7:9].cpu().numpy().astype(np.float32)       # (B, 2)
+
+        state = np.concatenate(
+            [eef_pos, eef_quat, gripper_qpos],
+            axis=-1,  # -> (B, 9)
+        )
+        B = state.shape[0]
+
+
+        # -------------------------------------------------
+        # Final observation dict (OpenPI format)
+        # -------------------------------------------------
         observations = {
-            "video.left_view": np.expand_dims(self._left_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-            "video.right_view": np.expand_dims(self._right_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-            "video.wrist_view": np.expand_dims(self._wrist_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-            "state.eef_position": np.expand_dims(self.fingertip_midpoint_pos.cpu().numpy().astype(np.float64), axis=1),
-            "state.eef_quaternion": np.expand_dims(self.fingertip_midpoint_quat.cpu().numpy().astype(np.float64), axis=1),
-            "state.gripper_qpos": np.expand_dims(self.joint_pos[:, 7:9].cpu().numpy().astype(np.float64), axis=1),
+            "observation/state": state,
+            "observation/images/left_view": left_view,
+            "observation/images/right_view": right_view,
+            "observation/wrist_view": wrist_view,
+            "prompt": ["assemble the gear mesh"] * B,
         }
+
         return observations

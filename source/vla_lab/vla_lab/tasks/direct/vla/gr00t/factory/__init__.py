@@ -68,35 +68,3 @@ gym.register(
         "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg_nut_thread.yaml",
     },
 )
-
-
-################## GR00T Old Env ##################
-# Not parallel env
-# just for comparing with old results
-gym.register(
-    id="VlaLab-VLA-Gr00t-Factory-PegInsert-Direct-v0",
-    entry_point=f"{__name__}.factory_gr00t_not_parallel_env:FactoryGr00tNotParallelEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.factory_gr00t_env_cfg:FactoryTaskPegInsertGr00tCfg",
-        "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg_peg_insert.yaml",
-    },
-)
-gym.register(
-    id="VlaLab-VLA-Gr00t-Factory-GearMesh-Direct-v0",
-    entry_point=f"{__name__}.factory_gr00t_not_parallel_env:FactoryGr00tNotParallelEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.factory_gr00t_env_cfg:FactoryTaskGearMeshGr00tCfg",
-        "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg_gear_mesh.yaml",
-    },
-)
-gym.register(
-    id="VlaLab-VLA-Gr00t-Factory-NutThread-Direct-v0",
-    entry_point=f"{__name__}.factory_gr00t_not_parallel_env:FactoryGr00tNotParallelEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.factory_gr00t_env_cfg:FactoryTaskNutThreadGr00tCfg",
-        "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg_nut_thread.yaml",
-    },
-)

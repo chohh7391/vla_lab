@@ -33,17 +33,3 @@ gym.register(
         "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg.yaml",
     },
 )
-
-
-################## GR00T Old Env ##################
-# Not parallel env
-# just for comparing with old results
-gym.register(
-    id="VlaLab-Gr00t-AutoMate-Disassembly-Direct-v0",
-    entry_point=f"{__name__}.assembly_gr00t_not_parallel_env:AssemblyGr00tNotParallelEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.assembly_gr00t_env_cfg:AutomateTaskAssemblyGr00tCfg",
-        "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg.yaml",
-    },
-)

@@ -9,7 +9,7 @@ from vla_lab.tasks.direct.base_line.factory.factory_tasks_cfg import FactoryTask
 
 
 @configclass
-class FactoryGr00tTask(FactoryTask):
+class FactoryPi05Task(FactoryTask):
     action_penalty_ee_scale: float = 0.0
     action_penalty_asset_scale: float = 0.001
     action_grad_penalty_scale: float = 0.1
@@ -19,15 +19,16 @@ class FactoryGr00tTask(FactoryTask):
 
 
 @configclass
-class FactoryGr00tPegInsert(PegInsert, FactoryGr00tTask):
+class FactoryPi05PegInsert(PegInsert, FactoryPi05Task):
     contact_penalty_scale: float = 0.01
 
 
 @configclass
-class FactoryGr00tGearMesh(GearMesh, FactoryGr00tTask):
+class FactoryPi05GearMesh(GearMesh, FactoryPi05Task):
     contact_penalty_scale: float = 0.0025
 
 
 @configclass
-class FactoryGr00tNutThread(NutThread, FactoryGr00tTask):
+class FactoryPi05NutThread(NutThread, FactoryPi05Task):
     contact_penalty_scale: float = 0.0025
+ 
