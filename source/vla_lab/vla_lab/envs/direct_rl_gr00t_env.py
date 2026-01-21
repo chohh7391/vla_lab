@@ -17,7 +17,7 @@ from isaaclab.envs.common import VecEnvObs, VecEnvStepReturn
 from isaaclab.envs.direct_rl_env_cfg import DirectRLEnvCfg
 from isaaclab.envs.direct_rl_env import DirectRLEnv
 
-from .utils.gr00t_service import AsyncGr00tInferenceClient
+from .utils import AsyncGr00tInferenceClient
 
 
 class DirectRLGr00tEnv(DirectRLEnv):

@@ -17,7 +17,7 @@ from isaaclab.envs.common import VecEnvObs, VecEnvStepReturn
 from isaaclab.envs.direct_rl_env_cfg import DirectRLEnvCfg
 from isaaclab.envs.direct_rl_env import DirectRLEnv
 
-from .utils.pi05_service import AsyncPi05InferenceClient
+from .utils import AsyncPi05InferenceClient
 
 
 class DirectRLPi05Env(DirectRLEnv):
