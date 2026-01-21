@@ -26,7 +26,7 @@ class DirectRLGr00tEnv(DirectRLEnv):
         super().__init__(cfg=cfg, render_mode=render_mode, **kwargs)
 
         self.gr00t_chunk_size = 16
-        self.gr00t_policy = AsyncGr00tInferenceClient(host="localhost", port=5556)
+        self.gr00t_policy = AsyncGr00tInferenceClient(host="localhost", port=5555)  # TODO: edit port id
         print("Initialize Gr00t Client Node")
 
         self.gr00t_actions: Dict[str, Any] | None = None
@@ -105,7 +105,7 @@ class DirectRLGr00tEnv(DirectRLEnv):
 
         if self.episode_length_buf[0] % self.gr00t_chunk_size == 0:
 
-            if self.episode_length_buf[0].item() != 0: # First Step after reset
+            if self.episode_length_buf[0].item() != 0:  # First Step after reset
                 try:
                     self.gr00t_actions = self.gr00t_policy.get_result()
                 except Exception as e:

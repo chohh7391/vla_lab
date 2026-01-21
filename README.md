@@ -280,7 +280,7 @@ python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Direct-
 ```
 
 
-# Log
+# Generate Dataset via Teleoperation
 
 - transfer isaaclab demos to gr00t dataset
 ```bash
