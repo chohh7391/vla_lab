@@ -47,18 +47,18 @@ python -m pip install zmq scikit-learn pyarrow fastparquet av
     - Listing the available tasks:
 
         Note: It the task name changes, it may be necessary to update the search pattern `"VlaLab-"`
-        (in the `scripts/list_envs.py` file) so that it can be listed.
+        (in the `scripts/reinforcement_learning/list_envs.py` file) so that it can be listed.
 
         ```bash
         # use 'FULL_PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-        python scripts/list_envs.py
+        python scripts/reinforcement_learning/list_envs.py
         ```
 
     - Running a task:
 
         ```bash
         # use 'FULL_PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-        python scripts/<RL_LIBRARY>/train.py --task=<TASK_NAME>
+        python scripts/reinforcement_learning/<RL_LIBRARY>/train.py --task=<TASK_NAME>
         ```
 
     - Running a task with dummy agents:
@@ -69,13 +69,13 @@ python -m pip install zmq scikit-learn pyarrow fastparquet av
 
             ```bash
             # use 'FULL_PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-            python scripts/zero_agent.py --task=<TASK_NAME>
+            python scripts/reinforcement_learning/zero_agent.py --task=<TASK_NAME>
             ```
         - Random-action agent
 
             ```bash
             # use 'FULL_PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-            python scripts/random_agent.py --task=<TASK_NAME>
+            python scripts/reinforcement_learning/random_agent.py --task=<TASK_NAME>
             ```
 
 ### Set up IDE (Optional)
@@ -168,17 +168,17 @@ Some examples of packages that can likely be excluded are:
 
 - PegInsert Demo Save
 ```bash
-python scripts/rl_games/play.py --task=VlaLab-VLA-Gr00t-Forge-PegInsert-Demo-Save-Direct-v0 --headless --enable_cameras --checkpoint=<BASE_LINE_CHECKPOINT_PATH>
+python scripts/reinforcement_learning/rl_games/play.py --task=VlaLab-VLA-Gr00t-Forge-PegInsert-Demo-Save-Direct-v0 --headless --enable_cameras --checkpoint=<BASE_LINE_CHECKPOINT_PATH>
 ```
 
 - GearMesh Demo Save
 ```bash
-python scripts/rl_games/play.py --task=VlaLab-VLA-Gr00t-Forge-GearMesh-Demo-Save-Direct-v0 --headless --enable_cameras --checkpoint=<BASE_LINE_CHECKPOINT_PATH>
+python scripts/reinforcement_learning/rl_games/play.py --task=VlaLab-VLA-Gr00t-Forge-GearMesh-Demo-Save-Direct-v0 --headless --enable_cameras --checkpoint=<BASE_LINE_CHECKPOINT_PATH>
 ```
 
 - NutThread Demo Save
 ```bash
-python scripts/rl_games/play.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Demo-Save-Direct-v0 --headless --enable_cameras --checkpoint=<BASE_LINE_CHECKPOINT_PATH>
+python scripts/reinforcement_learning/rl_games/play.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Demo-Save-Direct-v0 --headless --enable_cameras --checkpoint=<BASE_LINE_CHECKPOINT_PATH>
 ```
 
 - Automate Demo Save
@@ -268,15 +268,15 @@ python scripts/inference_service.py --server --model_path <GR00T_MODEL_PATH> --e
 - Train vla-rl policy
 
 ```
-python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-PegInsert-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-peg_insert --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
+python scripts/reinforcement_learning/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-PegInsert-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-peg_insert --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
 ```
 
 ```
-python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-GearMesh-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-gear_mesh --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
+python scripts/reinforcement_learning/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-GearMesh-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-gear_mesh --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
 ```
 
 ```
-python scripts/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-nut_thread --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
+python scripts/reinforcement_learning/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-nut_thread --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
 ```
 
 
