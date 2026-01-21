@@ -54,6 +54,11 @@ class ForgeEnv(FactoryEnv):
         self.pos_threshold = self.default_pos_threshold.clone()
         self.rot_threshold = self.default_rot_threshold.clone()
 
+        # for F/T sparse reward
+        self._prev_phi_f = torch.zeros(
+            self.num_envs, dtype=torch.float32, device=self.device
+        )
+
     def _compute_intermediate_values(self, dt):
         """Add noise to observations for force sensing."""
         super()._compute_intermediate_values(dt)
@@ -328,6 +333,10 @@ class ForgeEnv(FactoryEnv):
         self.flip_quats = torch.ones((self.num_envs,), dtype=torch.float32, device=self.device)
         rand_flips = torch.rand(self.num_envs) > 0.5
         self.flip_quats[rand_flips] = -1.0
+
+        # initialize previous phi_f
+        if hasattr(self, "_prev_phi_f") and self._prev_phi_f is not None:
+            self._prev_phi_f[env_ids] = 0.0
 
     def _reset_buffers(self, env_ids):
         """Reset additional logging metrics."""

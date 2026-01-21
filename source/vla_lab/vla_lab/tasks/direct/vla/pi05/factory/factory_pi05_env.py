@@ -19,6 +19,7 @@ from vla_lab.tasks.direct.base_line.factory import factory_utils
 from vla_lab.tasks.direct.vla.pi05.factory.factory_pi05_env_cfg import FactoryPi05EnvCfg
 from vla_lab.tasks.direct.vla.gr00t.factory.base.factory_env import FactoryEnv
 from vla_lab.tasks.direct.base_line.forge import forge_utils
+import torch.nn.functional as F
 
 
 class FactoryPi05Env(FactoryEnv):
@@ -194,38 +195,64 @@ class FactoryPi05Env(FactoryEnv):
         return noisy_force, force_sensor_smooth[:, 0:3]
     
     def get_sparse_rewards(self) -> torch.Tensor:
-        
-        rew_buf = torch.zeros(self.num_envs, dtype=torch.float32, device=self.device)
-        rew_dict, rew_scales = {}, {}
-
-        # Calculate action penalty for the asset-relative action space.
-        pos_error = torch.norm(self.delta_pos, p=2, dim=-1) / self.cfg.ctrl.pos_action_threshold[0]
-        rot_error = torch.abs(self.delta_yaw) / self.cfg.ctrl.rot_action_threshold[0]
-        # Contact penalty.
-        noisy_force, force_sensor_smooth = self.get_ft_force()
-        contact_force = torch.norm(force_sensor_smooth[:, 0:3], p=2, dim=-1, keepdim=False)
-        contact_penalty = torch.nn.functional.relu(contact_force - self.contact_penalty_thresholds)
-        # Add success prediction rewards.
+        """
+        Reward structure (paper-aligned):
+            r = r_s + r_penalty + r_shaping
+            r_s        : sparse success reward
+            r_penalty  : -alpha * max(0, ||F|| - F_limit)
+            r_shaping  : lambda_f * (gamma * phi(s_{t+1}) - phi(s_t))
+            phi(s)     : -log(c_f * max(0, ||F|| - F_limit) + 1)
+            gamma      : fixed to 0.995
+        """
+        # ------------------------------------------------------------
+        # Initialize reward buffer
+        # ------------------------------------------------------------
+        rew_buf = torch.zeros(
+            self.num_envs, dtype=torch.float32, device=self.device
+        )
+        # ============================================================
+        # (1) Success reward: r_s
+        # ============================================================
         check_rot = self.cfg_task.name == "nut_thread"
         curr_successes = self._get_curr_successes(
-            success_threshold=self.cfg_task.success_threshold, check_rot=check_rot
+            success_threshold=self.cfg_task.success_threshold,
+            check_rot=check_rot,
+        )
+        r_s = curr_successes.float()
+        # ============================================================
+        # (2) Contact force penalty: r_penalty
+        #     r_penalty = -alpha * max(0, ||F|| - F_limit)
+        # ============================================================
+        _, force_sensor_smooth = self.get_ft_force()
+        contact_force = torch.norm(
+            force_sensor_smooth[:, 0:3], p=2, dim=-1
         )
 
-        rew_dict = {
-            "curr_success": curr_successes.float(),
-            # "action_penalty_asset": pos_error + rot_error,
-            # "contact_penalty": contact_penalty,
-        }
-        rew_scales = {
-            "curr_success": 1.0,
-            # "action_penalty_asset": -self.cfg_task.action_penalty_asset_scale,
-            # "contact_penalty": -self.cfg_task.contact_penalty_scale,
-        }
-
-        for rew_name in rew_dict.keys():
-            rew = rew_dict[rew_name] * rew_scales[rew_name]
-            rew_buf += rew
-
+        F_limit = self.contact_penalty_thresholds
+        contact_over = F.relu(contact_force - F_limit)
+        alpha = getattr(self.cfg_task, "contact_penalty_alpha", None)
+        if alpha is None:
+            alpha = getattr(self.cfg_task, "contact_penalty_scale", 1.0)
+        r_penalty = -alpha * contact_over
+        # ============================================================
+        # (3) Potential-based shaping: r_shaping
+        #     r_shaping = lambda_f * (gamma * phi(s_{t+1}) - phi(s_t))
+        # ============================================================
+        gamma = 0.995  # FIXED as requested
+        lambda_f = getattr(self.cfg_task, "force_shaping_lambda", 0.0)
+        c_f = getattr(self.cfg_task, "force_potential_c", 1.0)
+        # phi(s_{t+1})
+        phi_curr = -torch.log(c_f * contact_over + 1.0)
+        # shaping reward
+        r_shaping = lambda_f * (gamma * phi_curr - self._prev_phi_f)
+        # update buffer for next step
+        self._prev_phi_f = phi_curr.detach()
+        # ============================================================
+        # (4) Total reward
+        # ============================================================
+        rew_buf += r_s
+        rew_buf += r_penalty
+        rew_buf += r_shaping
         return rew_buf
 
     
