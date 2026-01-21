@@ -1,2 +1,1 @@
 from .direct_rl_gr00t_env import DirectRLGr00tEnv
-from .direct_rl_gr00t_not_parallel_env import DirectRLGr00tNotParallelEnv
