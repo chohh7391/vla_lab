@@ -30,8 +30,8 @@ parser.add_argument(
 parser.add_argument("--checkpoint", type=str, default=None, help="Path to model checkpoint.")
 parser.add_argument("--sigma", type=str, default=None, help="The policy's initial standard deviation.")
 parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy training iterations.")
-parser.add_argument("--wandb-project-name", type=str, default=None, help="the wandb's project name")
 parser.add_argument("--wandb-entity", type=str, default=None, help="the entity (team) of wandb's project")
+parser.add_argument("--wandb-project-name", type=str, default=None, help="the wandb's project name")
 parser.add_argument("--wandb-name", type=str, default=None, help="the name of wandb's run")
 parser.add_argument(
     "--track",
@@ -43,6 +43,8 @@ parser.add_argument(
 )
 parser.add_argument("--export_io_descriptors", action="store_true", default=False, help="Export IO descriptors.")
 parser.add_argument("--huggingface", action="store_true", default=False, help="Upload logs to Hugging Face and remove local logs after training.")
+parser.add_argument("--repo_id", type=str, default=None, help="Hugging Repository Name for uploading")
+
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
@@ -155,9 +157,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     full_log_path = os.path.join(log_root_path, log_dir)
     if args_cli.huggingface:
-        username = whoami()["name"]
-        repo_name = f"{config_name}-{log_dir}"
-        repo_id = f"{username}/{repo_name}"
+        repo_id = args_cli.repo_id
         print(f"[INFO] Creating Hugging Face repo: {repo_id}")
         create_repo(repo_id=repo_id, repo_type="model", private=False, exist_ok=True)
     else:

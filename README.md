@@ -268,15 +268,12 @@ python scripts/inference_service.py --server --model_path <GR00T_MODEL_PATH> --e
 - Train vla-rl policy
 
 ```
-python scripts/reinforcement_learning/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-PegInsert-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-peg_insert --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
+python scripts/reinforcement_learning/rl_games/train.py --task={TASK_NAME} --headless --enable_cameras --wandb-entity={YOUR_ENTITY} --wandb-project-name={WANDB_PROJECT_NAME} --wandb-name={RUN_NAME} --huggingface --repo_id={REPOSITORY_ID}
 ```
 
-```
-python scripts/reinforcement_learning/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-GearMesh-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-gear_mesh --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
-```
-
-```
-python scripts/reinforcement_learning/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-NutThread-Direct-v1 --headless --enable_cameras --wandb-project-name=vla-gr00t-forge-nut_thread --wandb-entity={YOUR_ENTITY} --wandb-name={RUN_NAME} --huggingface
+(e.g)
+```bash
+python scripts/reinforcement_learning/rl_games/train.py --task=VlaLab-VLA-Gr00t-Forge-PegInsert-Direct-v1 --headless --enable_cameras --wandb-entity=chohh7391-kyung-hee-university --wandb-project-name=VLA_RL-VLA_RL-gr00t --wandb-name=forge-peg_insert --huggingface --repo_id=bhe1004/VLA_RL-VLA_RL-gr00t-forge-peg_insert
 ```
 
 
