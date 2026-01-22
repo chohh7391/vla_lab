@@ -194,7 +194,7 @@ python source/vla_lab/vla_lab/tasks/direct/base_line/automate/run_w_id.py --asse
 
 - Install Isaac-GR00T
 
-```
+```bash
 cd ~/
 
 git clone https://github.com/NVIDIA/Isaac-GR00T.git
@@ -202,7 +202,7 @@ git clone https://github.com/NVIDIA/Isaac-GR00T.git
 
 - install dependencies
 
-```
+```bash
 cd Isaac-GR00T
 conda create -n gr00t python=3.10
 conda activate gr00t
@@ -257,7 +257,7 @@ python scripts/eval_policy.py \
 
 - run gr00t server
 
-```
+```bash
 cd ~/Isaac-GR00T
 
 python scripts/inference_service.py --server --model_path <GR00T_MODEL_PATH> --embodiment-tag franka --data-config franka_triple_cam --denoising-steps 4 --port {PORT_ID}
@@ -266,7 +266,7 @@ python scripts/inference_service.py --server --model_path <GR00T_MODEL_PATH> --e
 - change port id to {PORT_ID} in source/vla_lab/vla_lab/envs/direct_rl_gr00t_env.py
 
 - Train vla-rl policy
-```
+```bash
 python scripts/reinforcement_learning/rl_games/train.py --task={TASK_NAME} --headless --enable_cameras --wandb-entity={YOUR_ENTITY} --wandb-project-name={WANDB_PROJECT_NAME} --wandb-name={RUN_NAME} --huggingface --repo_id={REPOSITORY_ID}
 ```
 
