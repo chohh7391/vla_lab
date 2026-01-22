@@ -56,6 +56,16 @@ def main():
     parser.add_argument("--headless", action="store_true", help="Run in headless mode.")
     parser.add_argument("--max_iterations", type=int, default=1500, help="Number of iteration for policy learning.")
     parser.add_argument("--demo_save", action="store_true", help="Run demo saving mode")
+    parser.add_argument("--wandb_entity", type=str, default=None, help="W&B entity (team/user).")
+    parser.add_argument("--wandb_project_name", type=str, default=None, help="W&B project name.")
+    parser.add_argument("--wandb_name", type=str, default=None, help="W&B run name.")
+    parser.add_argument("--huggingface", action="store_true", help="Upload logs to Hugging Face.")
+    parser.add_argument("--repo_id", type=str, default=None, help="Huggingface Repository id")
+    parser.add_argument(
+        "--track",
+        action="store_true",
+        help="Enable W&B tracking (pass-through to train.py).",
+    )
     args = parser.parse_args()
 
     update_task_param(args.cfg_path, args.assembly_id, args.train, args.log_eval)
@@ -83,6 +93,23 @@ def main():
 
     if args.headless:
         bash_command += " --headless"
+    
+    if args.wandb_project_name:
+        bash_command += f" --wandb-project-name={args.wandb_project_name}"
+
+    if args.wandb_entity:
+        bash_command += f" --wandb-entity={args.wandb_entity}"
+
+    if args.wandb_name:
+        bash_command += f" --wandb-name={args.wandb_name}"
+
+    if args.huggingface:
+        assert args.repo_id
+        bash_command += " --huggingface"
+        bash_command += f" --repo_id={args.repo_id}"
+
+    if args.track:
+        bash_command += " --track"
 
     # Run the bash command
     subprocess.run(bash_command, shell=True, check=True)
