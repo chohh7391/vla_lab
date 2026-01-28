@@ -84,8 +84,8 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
                     print(f"Error getting Gr00t action: {e}")
                     self._gr00t_actions = torch.zeros((self.num_envs, self._chunk_size, self.action_dim), device=self.device)
             
-            gr00t_actions_pos = torch.tensor(self.gr00t_actions["action.eef_position_delta"], dtype=torch.float32, device=self.device)
-            gr00t_actions_rot = torch.tensor(self.gr00t_actions["action.eef_rotation_delta"], dtype=torch.float32, device=self.device)
+            gr00t_actions_pos = torch.tensor(self._gr00t_actions["action.eef_position_delta"], dtype=torch.float32, device=self.device)
+            gr00t_actions_rot = torch.tensor(self._gr00t_actions["action.eef_rotation_delta"], dtype=torch.float32, device=self.device)
             gr00t_actions_delta_pose = torch.cat(
                 (gr00t_actions_pos, gr00t_actions_rot), dim=-1
             )
