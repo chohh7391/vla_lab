@@ -77,7 +77,7 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
         
         # process gr00t actions
         if self._episode_length % self._chunk_size == 0:
-            if self._episode_length.item() != 0:
+            if self._episode_length != 0:
                 try:
                     self._gr00t_actions = self._gr00t_policy.get_result()
                 except Exception as e:
