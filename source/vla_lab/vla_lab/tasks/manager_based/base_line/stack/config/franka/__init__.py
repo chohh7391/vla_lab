@@ -19,6 +19,7 @@ gym.register(
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": f"{__name__}.stack_joint_pos_env_cfg:FrankaCubeStackEnvCfg",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:CubeStackPPORunnerCfg",
     },
     disable_env_checker=True,
 )
@@ -33,6 +34,19 @@ gym.register(
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": f"{__name__}.stack_ik_rel_gr00t_env_cfg:FrankaCubeStackGr00tEnvCfg",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:CubeStackPPORunnerCfg",
     },
     disable_env_checker=True,
 )
+
+gym.register(
+    id="VlaLab-BaseLine-Stack-IK-Rel-Gr00t-Play-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.stack_ik_rel_gr00t_env_cfg:FrankaCubeStackGr00tPlayEnvCfg",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:CubeStackPPORunnerCfg",
+    },
+    disable_env_checker=True,
+)
+
+

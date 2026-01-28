@@ -6,6 +6,7 @@
 import isaaclab.sim as sim_utils
 from isaaclab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
 from isaaclab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg
+from vla_lab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsChunkedActionCfg
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
 from isaaclab.managers import ObservationTermCfg as ObsTerm
@@ -257,3 +258,59 @@ class FrankaCubeStackGr00tEnvCfg(stack_joint_pos_env_cfg.FrankaCubeStackEnvCfg):
 
         # List of image observations in policy observations
         self.image_obs_list = ["left_camera", "right_camera", "wrist_camera"]
+
+
+@configclass
+class DummyObservationsCfg:
+    """Observation specifications for the MDP."""
+
+    @configclass
+    class PolicyCfg(ObsGroup):
+        """Observations for policy group with state values."""
+
+        # For Augmentation
+        eef_pos = ObsTerm(func=mdp.ee_frame_pos)
+        eef_quat = ObsTerm(func=mdp.ee_frame_quat)
+        
+        # For Gr00t
+        state = ObsTerm(func=gr00t_obs.state) # ee_pose + gripper_qpos = 9
+        
+        # left_camera = ObsTerm(
+        #     func=mdp.image, params={"sensor_cfg": SceneEntityCfg("left_camera"), "data_type": "rgb", "normalize": False}
+        # )
+        # right_camera = ObsTerm(
+        #     func=mdp.image, params={"sensor_cfg": SceneEntityCfg("right_camera"), "data_type": "rgb", "normalize": False}
+        # )
+        # wrist_camera = ObsTerm(
+        #     func=mdp.image, params={"sensor_cfg": SceneEntityCfg("wrist_camera"), "data_type": "rgb", "normalize": False}
+        # )
+
+        def __post_init__(self):
+            self.enable_corruption = False
+            self.concatenate_terms = True
+
+    # observation groups
+    policy: PolicyCfg = PolicyCfg()
+
+
+@configclass
+class FrankaCubeStackGr00tPlayEnvCfg(FrankaCubeStackGr00tEnvCfg):
+
+    observations: DummyObservationsCfg = DummyObservationsCfg()
+
+    def __post_init__(self):
+        # post init of parent
+        super().__post_init__()
+
+        # Set actions for the specific robot type (franka)
+        self.actions.arm_action = DifferentialInverseKinematicsChunkedActionCfg(
+            asset_name="robot",
+            joint_names=["panda_joint.*"],
+            body_name="panda_hand",
+            controller=DifferentialIKControllerCfg(command_type="pose", use_relative_mode=True, ik_method="dls"),
+            scale=0.3,
+            body_offset=DifferentialInverseKinematicsChunkedActionCfg.OffsetCfg(pos=[0.0, 0.0, 0.107]),
+            chunk_size=16,
+            vla_server_port=5555,
+        )
+
