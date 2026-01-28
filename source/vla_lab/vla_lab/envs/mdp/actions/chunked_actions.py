@@ -92,7 +92,7 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
             self._processed_gr00t_actions = gr00t_actions_delta_pose
 
         elif self._episode_length % self._chunk_size == int(self._chunk_size / 2):
-            self._gr00t_policy.request_action(self.get_gr00t_observations(env=self._env))
+            self._gr00t_policy.request_action(get_gr00t_observations(env=self._env))
 
         self._processed_actions[:] = self._scale * (
             self.raw_actions + self._processed_gr00t_actions[:, self._episode_length % self._chunk_size, :]
