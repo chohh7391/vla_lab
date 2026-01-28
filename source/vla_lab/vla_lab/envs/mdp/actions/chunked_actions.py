@@ -48,6 +48,7 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
         self._gr00t_observations: Dict[str, Any] | None = None
         self._gr00t_actions: Dict[str, Any] | None = None
         self._processed_gr00t_actions: torch.Tensor | None = None
+        self._episode_length: int = 0
 
 
     """
@@ -75,8 +76,8 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
         self._raw_actions[:] = actions
         
         # process gr00t actions
-        if self._env.episode_length_buf[0] % self._chunk_size == 0:
-            if self._env.episode_length_buf[0].item() != 0:
+        if self._episode_length % self._chunk_size == 0:
+            if self._episode_length.item() != 0:
                 try:
                     self._gr00t_actions = self._gr00t_policy.get_result()
                 except Exception as e:
@@ -90,11 +91,11 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
             )
             self._processed_gr00t_actions = gr00t_actions_delta_pose
 
-        elif self._env.episode_length_buf[0] % self._chunk_size == int(self._chunk_size / 2):
+        elif self._episode_length % self._chunk_size == int(self._chunk_size / 2):
             self._gr00t_policy.request_action(self.get_gr00t_observations(env=self._env))
 
         self._processed_actions[:] = self._scale * (
-            self.raw_actions + self._processed_gr00t_actions[:, self._env.episode_length_buf[0] % self._chunk_size, :]
+            self.raw_actions + self._processed_gr00t_actions[:, self._episode_length % self._chunk_size, :]
         )
         if self.cfg.clip is not None:
             self._processed_actions = torch.clamp(
@@ -105,6 +106,7 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
 
         # set command into controller
         self._ik_controller.set_command(self._processed_actions, ee_pos_curr, ee_quat_curr)
+        self._episode_length += 1
 
     def apply_actions(self):
         # obtain quantities from simulation
@@ -121,6 +123,7 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
         self._raw_actions[env_ids] = 0.0
+        self._episode_length = 0
         self._gr00t_observations = get_gr00t_observations(env=self._env)
         self._gr00t_actions = self._gr00t_policy.get_action_sync(self._gr00t_observations)
 
