@@ -312,5 +312,6 @@ class FrankaCubeStackGr00tPlayEnvCfg(FrankaCubeStackGr00tEnvCfg):
             body_offset=DifferentialInverseKinematicsChunkedActionCfg.OffsetCfg(pos=[0.0, 0.0, 0.107]),
             chunk_size=16,
             vla_server_port=5555,
+            vla_only=True
         )
 

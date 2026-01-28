@@ -31,4 +31,4 @@ class DifferentialInverseKinematicsChunkedActionCfg(DifferentialInverseKinematic
     """The configuration for the differential IK controller."""
     chunk_size: int = 16
     vla_server_port: int = 5555
-    
+    vla_only: bool = False

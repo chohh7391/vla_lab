@@ -49,6 +49,7 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
         self._gr00t_actions: Dict[str, Any] | None = None
         self._processed_gr00t_actions: torch.Tensor | None = None
         self._episode_length: int = 0
+        self._vla_only = self.cfg.vla_only
 
 
     """
@@ -94,9 +95,13 @@ class DifferentialInverseKinematicsChunkedAction(DifferentialInverseKinematicsAc
         elif self._episode_length % self._chunk_size == int(self._chunk_size / 2):
             self._gr00t_policy.request_action(get_gr00t_observations(env=self._env))
 
-        self._processed_actions[:] = self._scale * (
-            self.raw_actions + self._processed_gr00t_actions[:, self._episode_length % self._chunk_size, :]
-        )
+        if self._vla_only:
+            self._processed_actions[:] = self._scale * self._processed_gr00t_actions[:, self._episode_length % self._chunk_size, :]
+        else:
+            self._processed_actions[:] = self._scale * (
+                self.raw_actions + self._processed_gr00t_actions[:, self._episode_length % self._chunk_size, :]
+            )
+
         if self.cfg.clip is not None:
             self._processed_actions = torch.clamp(
                 self._processed_actions, min=self._clip[:, :, 0], max=self._clip[:, :, 1]
