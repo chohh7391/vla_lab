@@ -77,7 +77,7 @@ def next_done(
     return next_done
 
 
-def get_gr00t_observations(
+def get_vla_observations(
     env: ManagerBasedRLEnv,
     left_camera_cfg: SceneEntityCfg = SceneEntityCfg("left_camera"),
     right_camera_cfg: SceneEntityCfg = SceneEntityCfg("right_camera"),

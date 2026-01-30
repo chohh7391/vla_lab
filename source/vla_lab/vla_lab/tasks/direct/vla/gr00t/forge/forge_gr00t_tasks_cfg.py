@@ -16,11 +16,12 @@ class ForgeGr00tTask(FactoryTask):
     contact_penalty_scale: float = 0.05
     delay_until_ratio: float = 0.25
     contact_penalty_threshold_range = [5.0, 10.0]
+    force_shaping_lambda = 0.01
 
 
 @configclass
 class ForgeGr00tPegInsert(PegInsert, ForgeGr00tTask):
-    contact_penalty_scale: float = 0.01
+    contact_penalty_scale: float = 0.0003  # 0.0025  # 0.01
 
 
 @configclass

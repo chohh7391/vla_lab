@@ -267,7 +267,7 @@ python scripts/inference_service.py --server --model_path <GR00T_MODEL_PATH> --e
 
 - Train vla-rl policy
 ```bash
-python scripts/reinforcement_learning/rl_games/train.py --task={TASK_NAME} --headless --enable_cameras --wandb-entity={YOUR_ENTITY} --wandb-project-name={WANDB_PROJECT_NAME} --wandb-name={RUN_NAME} --huggingface --repo_id={REPOSITORY_ID}
+python scripts/reinforcement_learning/rl_games/train.py --task={TASK_NAME} --headless --enable_cameras --wandb-entity={YOUR_ENTITY} --wandb-project-name={WANDB_PROJECT_NAME} --wandb-name={RUN_NAME} --huggingface --repo_id={REPOSITORY_ID} --track
 ```
 
 - If your task is 'Automate', run this terminal input

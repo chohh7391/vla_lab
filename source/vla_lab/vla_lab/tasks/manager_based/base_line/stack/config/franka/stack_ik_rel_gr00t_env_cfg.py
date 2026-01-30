@@ -6,7 +6,11 @@
 import isaaclab.sim as sim_utils
 from isaaclab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
 from isaaclab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg
-from vla_lab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsChunkedActionCfg
+from vla_lab.envs.mdp.actions.actions_cfg import (
+    DifferentialInverseKinematicsChunkedActionCfg,
+    BinaryJointPositionChunkedActionCfg,
+)
+
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
 from isaaclab.managers import ObservationTermCfg as ObsTerm
@@ -314,4 +318,9 @@ class FrankaCubeStackGr00tPlayEnvCfg(FrankaCubeStackGr00tEnvCfg):
             vla_server_port=5555,
             vla_only=True
         )
-
+        self.actions.gripper_action = BinaryJointPositionChunkedActionCfg(
+            asset_name="robot",
+            joint_names=["panda_finger.*"],
+            open_command_expr={"panda_finger_.*": 0.04},
+            close_command_expr={"panda_finger_.*": 0.0},
+        )

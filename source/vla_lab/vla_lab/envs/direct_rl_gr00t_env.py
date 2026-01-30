@@ -26,7 +26,7 @@ class DirectRLGr00tEnv(DirectRLEnv):
         super().__init__(cfg=cfg, render_mode=render_mode, **kwargs)
 
         self.gr00t_chunk_size = 16
-        self.gr00t_policy = AsyncGr00tInferenceClient(host="localhost", port=5556)  # TODO: edit port id
+        self.gr00t_policy = AsyncGr00tInferenceClient(host="localhost", port=5555)  # TODO: edit port id
         print("Initialize Gr00t Client Node")
 
         self.gr00t_actions: Dict[str, Any] | None = None
@@ -138,6 +138,7 @@ class DirectRLGr00tEnv(DirectRLEnv):
 
         # process actions
         # self._pre_physics_step(action)
+        # self._pre_physics_step(self.processed_gr00t_actions[:, self.episode_length_buf[0] % self.gr00t_chunk_size, :])
         self._pre_physics_step(action + self.processed_gr00t_actions[:, self.episode_length_buf[0] % self.gr00t_chunk_size, :])
 
         # check if we need to do rendering within the physics loop

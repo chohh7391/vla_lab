@@ -17,6 +17,7 @@ from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
 from isaaclab.sensors import TiledCamera
 import torch.nn.functional as F
+import wandb
 
 
 class ForgeGr00tEnv(ForgeEnv):
@@ -97,7 +98,6 @@ class ForgeGr00tEnv(ForgeEnv):
 
         return noisy_force, force_sensor_smooth[:, 0:3]
 
-
     def get_sparse_rewards(self) -> torch.Tensor:
         """
         Reward structure (paper-aligned):
@@ -143,7 +143,7 @@ class ForgeGr00tEnv(ForgeEnv):
         #     r_shaping = lambda_f * (gamma * phi(s_{t+1}) - phi(s_t))
         # ============================================================
         gamma = 0.995  # FIXED as requested
-        lambda_f = getattr(self.cfg_task, "force_shaping_lambda", 0.0)
+        lambda_f = getattr(self.cfg_task, "force_shaping_lambda", 0.01)
         c_f = getattr(self.cfg_task, "force_potential_c", 1.0)
         # phi(s_{t+1})
         phi_curr = -torch.log(c_f * contact_over + 1.0)
@@ -157,8 +157,16 @@ class ForgeGr00tEnv(ForgeEnv):
         rew_buf += r_s
         rew_buf += r_penalty
         rew_buf += r_shaping
-        return rew_buf
 
+        wandb.log({
+            "success rate": curr_successes.float().mean() * 100,
+            "r_penalty": r_penalty.float().mean(),
+            "r_shaping": r_shaping.float().mean(),
+        })
+        # print(f"======= {self.episode_length_buf[0]} / {self.max_episode_length} =======")
+        # print(f"success rate: {curr_successes.float().mean()*100}%")
+
+        return rew_buf
 
     def _get_observations(self):
         """Add additional FORGE observations."""
@@ -190,7 +198,6 @@ class ForgeGr00tEnv(ForgeEnv):
         state_tensors = factory_utils.collapse_obs_dict(state_dict, self.cfg.state_order + ["prev_actions"])
 
         return {"policy": obs_tensors, "critic": state_tensors}
-
 
     def _get_gr00t_observations(self):
         # This is for gr00t observations

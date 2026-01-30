@@ -14,6 +14,7 @@ from . import (
 )
 
 from isaaclab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg
+from isaaclab.envs.mdp.actions.actions_cfg import BinaryJointPositionActionCfg
 
 ##
 # Task-space Actions.
@@ -29,6 +30,16 @@ class DifferentialInverseKinematicsChunkedActionCfg(DifferentialInverseKinematic
     class_type: type[ActionTerm] = chunked_actions.DifferentialInverseKinematicsChunkedAction
 
     """The configuration for the differential IK controller."""
+    vla_model_name: str = "gr00t"  # gr00t or pi05
     chunk_size: int = 16
     vla_server_port: int = 5555
     vla_only: bool = False
+
+
+@configclass
+class BinaryJointPositionChunkedActionCfg(BinaryJointPositionActionCfg):
+    """
+    Configuration for the binary joint position action term.
+    """
+
+    class_type: type[ActionTerm] = chunked_actions.BinaryJointPositionChunkedAction
