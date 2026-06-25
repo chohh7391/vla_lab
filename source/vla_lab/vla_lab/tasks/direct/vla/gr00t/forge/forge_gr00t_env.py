@@ -7,7 +7,7 @@ import torch
 
 from vla_lab.tasks.direct.base_line.factory import factory_utils
 from vla_lab.tasks.direct.base_line.forge import forge_utils
-from vla_lab.tasks.direct.vla.gr00t.forge.base.forge_env import ForgeEnv
+from vla_lab.tasks.direct.vla.common.forge_env import ForgeEnv
 from vla_lab.tasks.direct.vla.gr00t.forge.forge_gr00t_env_cfg import ForgeGr00tEnvCfg
 
 import isaaclab.sim as sim_utils
@@ -198,16 +198,3 @@ class ForgeGr00tEnv(ForgeEnv):
         state_tensors = factory_utils.collapse_obs_dict(state_dict, self.cfg.state_order + ["prev_actions"])
 
         return {"policy": obs_tensors, "critic": state_tensors}
-
-    def _get_gr00t_observations(self):
-        # This is for gr00t observations
-
-        observations = {
-            "video.left_view": np.expand_dims(self._left_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-            "video.right_view": np.expand_dims(self._right_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-            "video.wrist_view": np.expand_dims(self._wrist_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-            "state.eef_position": np.expand_dims(self.fingertip_midpoint_pos.cpu().numpy().astype(np.float64), axis=1),
-            "state.eef_quaternion": np.expand_dims(self.fingertip_midpoint_quat.cpu().numpy().astype(np.float64), axis=1),
-            "state.gripper_qpos": np.expand_dims(self.joint_pos[:, 7:9].cpu().numpy().astype(np.float64), axis=1),
-        }
-        return observations

@@ -26,6 +26,11 @@ STATE_DIM_CFG.update({"force_threshold": 1, "ft_force": 3})
 
 @configclass
 class FactoryPi05EnvCfg(DirectRLEnvCfg):
+    vla_model: str = "pi05"
+    vla_host: str = "127.0.0.1"
+    vla_port: int = 8000
+    vla_chunk_size: int = 8
+
     decimation = 8
     action_space = 6
     # num_*: will be overwritten to correspond to obs_order, state_order.

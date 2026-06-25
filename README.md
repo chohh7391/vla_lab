@@ -39,7 +39,7 @@ python _isaaclab/scripts/tutorials/00_sim/create_empty.py --headless
 python -m pip install -e source/vla_lab
 
 # 8) Extra dependencies
-python -m pip install zmq scikit-learn pyarrow fastparquet av
+python -m pip install zmq scikit-learn pyarrow fastparquet av json_numpy
 ```
 
 - Verify that the extension is correctly installed by:
@@ -182,15 +182,137 @@ python scripts/reinforcement_learning/rl_games/play.py --task=VlaLab-VLA-Gr00t-F
 ```
 
 - Automate Demo Save
-```bash
-python source/vla_lab/vla_lab/tasks/direct/base_line/automate/run_w_id.py --assembly_id=<Assembly_ID> --train
-```
+  - Automate tasks have been removed from this repository.
 
 - You can use hugging face
   - add `--huggingface` in terminal
 
 
-## 2. Train Gr00t Model using Demo
+## 2. Train RL with a VLA Server
+
+Start the VLA inference server first, then run RL training with the matching task id.
+Use `env.vla_host` and `env.vla_port` to point the Isaac Lab client to the server.
+
+### GR00T
+
+Smoke test:
+
+```bash
+python scripts/reinforcement_learning/rl_games/train.py \
+    --task=VlaLab-VLA-Gr00t-Factory-PegInsert-Direct-v1 \
+    --headless \
+    --enable_cameras \
+    --num_envs=2 \
+    --max_iterations=1 \
+    env.vla_host=<GR00T_SERVER_IP> \
+    env.vla_port=<GR00T_SERVER_PORT>
+```
+
+Training:
+
+```bash
+python scripts/reinforcement_learning/rl_games/train.py \
+    --task=VlaLab-VLA-Gr00t-Factory-PegInsert-Direct-v1 \
+    --headless \
+    --enable_cameras \
+    env.vla_host=<GR00T_SERVER_IP> \
+    env.vla_port=<GR00T_SERVER_PORT>
+```
+
+Available GR00T task ids:
+
+```text
+VlaLab-VLA-Gr00t-Factory-PegInsert-Direct-v1
+VlaLab-VLA-Gr00t-Factory-GearMesh-Direct-v1
+VlaLab-VLA-Gr00t-Factory-NutThread-Direct-v1
+VlaLab-VLA-Gr00t-Forge-PegInsert-Direct-v1
+VlaLab-VLA-Gr00t-Forge-GearMesh-Direct-v1
+VlaLab-VLA-Gr00t-Forge-NutThread-Direct-v1
+```
+
+### Pi05
+
+Smoke test:
+
+```bash
+python scripts/reinforcement_learning/rl_games/train.py \
+    --task=VlaLab-VLA-Pi05-Factory-PegInsert-Direct-v1 \
+    --headless \
+    --enable_cameras \
+    --num_envs=2 \
+    --max_iterations=1 \
+    env.vla_host=<PI05_SERVER_IP> \
+    env.vla_port=<PI05_SERVER_PORT>
+```
+
+Training:
+
+```bash
+python scripts/reinforcement_learning/rl_games/train.py \
+    --task=VlaLab-VLA-Pi05-Factory-PegInsert-Direct-v1 \
+    --headless \
+    --enable_cameras \
+    env.vla_host=<PI05_SERVER_IP> \
+    env.vla_port=<PI05_SERVER_PORT>
+```
+
+Available Pi05 task ids:
+
+```text
+VlaLab-VLA-Pi05-Factory-PegInsert-Direct-v1
+VlaLab-VLA-Pi05-Factory-GearMesh-Direct-v1
+VlaLab-VLA-Pi05-Factory-NutThread-Direct-v1
+VlaLab-VLA-Pi05-Forge-PegInsert-Direct-v1
+VlaLab-VLA-Pi05-Forge-GearMesh-Direct-v1
+VlaLab-VLA-Pi05-Forge-NutThread-Direct-v1
+```
+
+### OpenVLA
+
+Start the OpenVLA-OFT server with `openvla-oft/vla-scripts/deploy_batch.py`.
+The client uses `POST /act_batch` and expects the server to return `{"actions": ...}`.
+
+Smoke test:
+
+```bash
+python scripts/reinforcement_learning/rl_games/train.py \
+    --task=VlaLab-VLA-OpenVLA-Factory-PegInsert-Direct-v1 \
+    --headless \
+    --enable_cameras \
+    --num_envs=2 \
+    --max_iterations=1 \
+    env.vla_host=<OPENVLA_SERVER_IP> \
+    env.vla_port=<OPENVLA_SERVER_PORT>
+```
+
+Training:
+
+```bash
+python scripts/reinforcement_learning/rl_games/train.py \
+    --task=VlaLab-VLA-OpenVLA-Factory-PegInsert-Direct-v1 \
+    --headless \
+    --enable_cameras \
+    env.vla_host=<OPENVLA_SERVER_IP> \
+    env.vla_port=<OPENVLA_SERVER_PORT>
+```
+
+Available OpenVLA task ids:
+
+```text
+VlaLab-VLA-OpenVLA-Factory-PegInsert-Direct-v1
+VlaLab-VLA-OpenVLA-Factory-GearMesh-Direct-v1
+VlaLab-VLA-OpenVLA-Factory-NutThread-Direct-v1
+```
+
+Notes:
+
+- Isaac Sim startup can take a few minutes, especially with `--enable_cameras`.
+- `env.vla_host` and `env.vla_port` override the defaults in the environment config.
+- OpenVLA factory tasks default to 32 environments to reduce server-side GPU memory usage.
+- If the server is reachable, the log should print `Initialize gr00t Client Node`, `Initialize pi05 Client Node`, or `Initialize openvla Client Node`.
+
+
+## 3. Train Gr00t Model using Demo
 
 - Install Isaac-GR00T
 

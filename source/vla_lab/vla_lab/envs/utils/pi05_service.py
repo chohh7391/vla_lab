@@ -20,10 +20,12 @@ class AsyncPi05InferenceClient:
         host: str = "163.180.160.225",
         port: int = 8000,
         api_key: Optional[str] = None,
+        batched: bool = True,
     ):
         self.host = host
         self.port = port
         self.api_key = api_key
+        self.batched = batched
 
         # Single-slot queues to enforce pipeline discipline
         self._request_queue: Queue = Queue(maxsize=1)
@@ -58,7 +60,7 @@ class AsyncPi05InferenceClient:
                 break
 
             try:
-                result = policy.infer(obs)
+                result = policy.infer(self._prepare_observations(obs))
                 self._put_latest(self._result_queue, result)
             except Exception as e:
                 self._put_latest(self._result_queue, {"error": str(e)})
@@ -74,6 +76,11 @@ class AsyncPi05InferenceClient:
             except Exception:
                 pass
         queue.put(item)
+
+    def _prepare_observations(self, observations: Dict[str, Any]) -> Dict[str, Any]:
+        observations = dict(observations)
+        observations.setdefault("_batched", self.batched)
+        return observations
 
     # ------------------------------------------------------------------
     # Public async API
@@ -110,7 +117,7 @@ class AsyncPi05InferenceClient:
             port=self.port,
             api_key=self.api_key,
         )
-        return policy.infer(observations)
+        return policy.infer(self._prepare_observations(observations))
 
     # ------------------------------------------------------------------
     # Cleanup

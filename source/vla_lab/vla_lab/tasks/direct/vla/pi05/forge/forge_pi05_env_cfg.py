@@ -24,8 +24,12 @@ STATE_DIM_CFG.update({"force_threshold": 1, "ft_force": 3})
 
 @configclass
 class ForgePi05EnvCfg(ForgeEnvCfg):
+    vla_model: str = "pi05"
+    vla_host: str = "127.0.0.1"
+    vla_port: int = 8000
+    vla_chunk_size: int = 8
 
-    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=32, env_spacing=2.0)
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
     task: ForgePi05Task = ForgePi05Task()
 
     # Camera Config

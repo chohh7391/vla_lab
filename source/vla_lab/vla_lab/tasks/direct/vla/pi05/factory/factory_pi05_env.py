@@ -17,7 +17,7 @@ from isaaclab.sensors import TiledCamera
 from vla_lab.tasks.direct.base_line.factory import factory_utils
 
 from vla_lab.tasks.direct.vla.pi05.factory.factory_pi05_env_cfg import FactoryPi05EnvCfg
-from vla_lab.tasks.direct.vla.gr00t.factory.base.factory_env import FactoryEnv
+from vla_lab.tasks.direct.vla.common.factory_env import FactoryEnv
 from vla_lab.tasks.direct.base_line.forge import forge_utils
 import torch.nn.functional as F
 
@@ -34,6 +34,7 @@ class FactoryPi05Env(FactoryEnv):
         self.force_sensor_body_idx = self._robot.body_names.index("force_sensor")
         self.force_sensor_smooth = torch.zeros((self.num_envs, 6), device=self.device)
         self.force_sensor_world_smooth = torch.zeros((self.num_envs, 6), device=self.device)
+        self._prev_phi_f = torch.zeros(self.num_envs, dtype=torch.float32, device=self.device)
 
     def _setup_scene(self):
         """Initialize simulation scene."""
@@ -79,6 +80,8 @@ class FactoryPi05Env(FactoryEnv):
     def _reset_idx(self, env_ids):
         """We assume all envs will always be reset at the same time."""
         super()._reset_idx(env_ids)
+        if hasattr(self, "_prev_phi_f"):
+            self._prev_phi_f[env_ids] = 0.0
 
         contact_rand = torch.rand((self.num_envs,), dtype=torch.float32, device=self.device)
         contact_lower, contact_upper = [5.0, 10.0]
@@ -254,58 +257,3 @@ class FactoryPi05Env(FactoryEnv):
         rew_buf += r_penalty
         rew_buf += r_shaping
         return rew_buf
-
-    
-    # def _get_pi05_observations(self):
-    #     # This is for pi05 observations
-
-    #     observations = {
-    #         "video.left_view": np.expand_dims(self._left_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-    #         "video.right_view": np.expand_dims(self._right_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-    #         "video.wrist_view": np.expand_dims(self._wrist_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-    #         "state.eef_position": np.expand_dims(self.fingertip_midpoint_pos.cpu().numpy().astype(np.float64), axis=1),
-    #         "state.eef_quaternion": np.expand_dims(self.fingertip_midpoint_quat.cpu().numpy().astype(np.float64), axis=1),
-    #         "state.gripper_qpos": np.expand_dims(self.joint_pos[:, 7:9].cpu().numpy().astype(np.float64), axis=1),
-    #     }
-    #     return observations
-
-    def _get_pi05_observations(self):
-        """
-        Build observations in the exact format expected by OpenPI Franka policy.
-        """
-
-        # -------------------------------------------------
-        # Images: IsaacLab -> OpenPI
-        # IsaacLab rgb: (B, H, W, 3), uint8
-        # -------------------------------------------------
-        left_view = self._left_camera.data.output["rgb"].cpu().numpy().astype(np.uint8)
-        right_view = self._right_camera.data.output["rgb"].cpu().numpy().astype(np.uint8)
-        wrist_view = self._wrist_camera.data.output["rgb"].cpu().numpy().astype(np.uint8)
-
-        # -------------------------------------------------
-        # State: concatenate into a single 9D vector
-        #   [eef_pos(3), eef_quat(4), gripper_qpos(2)]
-        # -------------------------------------------------
-        eef_pos = self.fingertip_midpoint_pos.cpu().numpy().astype(np.float32)      # (B, 3)
-        eef_quat = self.fingertip_midpoint_quat.cpu().numpy().astype(np.float32)    # (B, 4)
-        gripper_qpos = self.joint_pos[:, 7:9].cpu().numpy().astype(np.float32)       # (B, 2)
-
-        state = np.concatenate(
-            [eef_pos, eef_quat, gripper_qpos],
-            axis=-1,  # -> (B, 9)
-        )
-        B = state.shape[0]
-
-        # -------------------------------------------------
-        # Final observation dict (OpenPI format)
-        # -------------------------------------------------
-        observations = {
-            "observation/state": state,
-            "observation/images/left_view": left_view,
-            "observation/images/right_view": right_view,
-            "observation/wrist_view": wrist_view,
-            "prompt": ["assemble the gear mesh"] * B,
-        }
-
-        return observations
-        

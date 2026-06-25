@@ -55,6 +55,11 @@ class DemoSaveNutThread(DemoSaveCfg):
 
 @configclass
 class FactoryGr00tEnvCfg(DirectRLEnvCfg):
+    vla_model: str = "gr00t"
+    vla_host: str = "localhost"
+    vla_port: int = 5555
+    vla_chunk_size: int = 16
+
     decimation = 8
     action_space = 6
     # num_*: will be overwritten to correspond to obs_order, state_order.
@@ -283,4 +288,3 @@ class FactoryTaskNutThreadGr00tDemoSaveCfg(FactoryTaskPegInsertGr00tDemoSaveCfg)
     episode_length_s = 25.0
     is_demo_save: bool = True
     demo_save_cfg: DemoSaveNutThread = DemoSaveNutThread()
-

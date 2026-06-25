@@ -53,6 +53,10 @@ class DemoSaveNutThread(DemoSaveCfg):
 
 @configclass
 class ForgeGr00tEnvCfg(ForgeEnvCfg):
+    vla_model: str = "gr00t"
+    vla_host: str = "localhost"
+    vla_port: int = 5555
+    vla_chunk_size: int = 16
 
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=64, env_spacing=2.0)
     task: ForgeGr00tTask = ForgeGr00tTask()

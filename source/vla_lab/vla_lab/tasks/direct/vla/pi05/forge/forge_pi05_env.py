@@ -7,7 +7,7 @@ import torch
 
 from vla_lab.tasks.direct.base_line.factory import factory_utils
 from vla_lab.tasks.direct.base_line.forge import forge_utils
-from vla_lab.tasks.direct.vla.gr00t.forge.base.forge_env import ForgeEnv
+from vla_lab.tasks.direct.vla.common.forge_env import ForgeEnv
 from vla_lab.tasks.direct.vla.pi05.forge.forge_pi05_env_cfg import ForgePi05EnvCfg
 
 import isaaclab.sim as sim_utils
@@ -162,57 +162,3 @@ class ForgePi05Env(ForgeEnv):
         state_tensors = factory_utils.collapse_obs_dict(state_dict, self.cfg.state_order + ["prev_actions"])
 
         return {"policy": obs_tensors, "critic": state_tensors}
-
-
-    # def _get_pi05_observations(self):
-    #     # This is for pi05 observations
-
-    #     observations = {
-    #         "video.left_view": np.expand_dims(self._left_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-    #         "video.right_view": np.expand_dims(self._right_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-    #         "video.wrist_view": np.expand_dims(self._wrist_camera.data.output["rgb"].cpu().numpy().astype(np.uint8), axis=1),
-    #         "state.eef_position": np.expand_dims(self.fingertip_midpoint_pos.cpu().numpy().astype(np.float64), axis=1),
-    #         "state.eef_quaternion": np.expand_dims(self.fingertip_midpoint_quat.cpu().numpy().astype(np.float64), axis=1),
-    #         "state.gripper_qpos": np.expand_dims(self.joint_pos[:, 7:9].cpu().numpy().astype(np.float64), axis=1),
-    #     }
-    #     return observations
-    def _get_pi05_observations(self):
-        """
-        Build observations in the exact format expected by OpenPI Franka policy.
-        """
-
-        # -------------------------------------------------
-        # Images: IsaacLab -> OpenPI
-        # IsaacLab rgb: (B, H, W, 3), uint8
-        # -------------------------------------------------
-        left_view = self._left_camera.data.output["rgb"].cpu().numpy().astype(np.uint8)
-        right_view = self._right_camera.data.output["rgb"].cpu().numpy().astype(np.uint8)
-        wrist_view = self._wrist_camera.data.output["rgb"].cpu().numpy().astype(np.uint8)
-
-        # -------------------------------------------------
-        # State: concatenate into a single 9D vector
-        #   [eef_pos(3), eef_quat(4), gripper_qpos(2)]
-        # -------------------------------------------------
-        eef_pos = self.fingertip_midpoint_pos.cpu().numpy().astype(np.float32)      # (B, 3)
-        eef_quat = self.fingertip_midpoint_quat.cpu().numpy().astype(np.float32)    # (B, 4)
-        gripper_qpos = self.joint_pos[:, 7:9].cpu().numpy().astype(np.float32)       # (B, 2)
-
-        state = np.concatenate(
-            [eef_pos, eef_quat, gripper_qpos],
-            axis=-1,  # -> (B, 9)
-        )
-        B = state.shape[0]
-
-
-        # -------------------------------------------------
-        # Final observation dict (OpenPI format)
-        # -------------------------------------------------
-        observations = {
-            "observation/state": state,
-            "observation/images/left_view": left_view,
-            "observation/images/right_view": right_view,
-            "observation/wrist_view": wrist_view,
-            "prompt": ["assemble the gear mesh"] * B,
-        }
-
-        return observations
