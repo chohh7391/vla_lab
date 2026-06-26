@@ -67,12 +67,9 @@ class FactoryEnv(DirectRLEnv):
         self.init_fixed_pos_obs_noise = torch.zeros((self.num_envs, 3), device=self.device)
 
         # Computer body indices.
-        self.left_finger_body_idx = self._robot.body_names.index("fr3_leftfinger")
-        self.right_finger_body_idx = self._robot.body_names.index("fr3_rightfinger")
-        self.fingertip_body_idx = self._robot.body_names.index("fr3_hand_tcp")
-        # self.left_finger_body_idx = self._robot.body_names.index("panda_leftfinger")
-        # self.right_finger_body_idx = self._robot.body_names.index("panda_rightfinger")
-        # self.fingertip_body_idx = self._robot.body_names.index("panda_fingertip_centered")
+        self.left_finger_body_idx = self._robot.body_names.index("panda_leftfinger")
+        self.right_finger_body_idx = self._robot.body_names.index("panda_rightfinger")
+        self.fingertip_body_idx = self._robot.body_names.index("panda_fingertip_centered")
 
         # Tensors for finite-differencing.
         self.last_update_timestamp = 0.0  # Note: This is for finite differencing body velocities.
