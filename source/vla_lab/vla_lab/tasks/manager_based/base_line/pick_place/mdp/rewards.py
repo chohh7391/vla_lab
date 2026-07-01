@@ -45,7 +45,7 @@ def object_placed_at_goal(
     green_cube_cfg: SceneEntityCfg = SceneEntityCfg("green_cube"),
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
     green_half_height: float = 0.0203,
-    white_half_height: float = 0.055,
+    white_half_height: float = 0.021,
 ) -> torch.Tensor:
     """Binary reward for placing the white cube on the green cube with the gripper open."""
     white: RigidObject = env.scene[object_cfg.name]
@@ -69,12 +69,13 @@ def object_placed_at_goal(
 def gripper_open_at_goal(
     env: ManagerBasedRLEnv,
     std: float = 0.08,
-    minimal_height: float = 0.07,
+    minimal_height: float = 0.04,
+    vel_std: float = 0.1,
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
     green_cube_cfg: SceneEntityCfg = SceneEntityCfg("green_cube"),
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
     green_half_height: float = 0.0203,
-    white_half_height: float = 0.055,
+    white_half_height: float = 0.021,
 ) -> torch.Tensor:
     """Encourage gripper to open when the held cube is near the stacking target.
 
@@ -83,7 +84,12 @@ def gripper_open_at_goal(
     reward is negligible during the carry phase (> 20 cm from target) and does not
     interfere with the grasping/lifting reward signal.
 
-    Reward = lifted * (1 - tanh(dist / std)) * gripper_openness, in [0, 1].
+    A velocity gate ``stable = 1 - tanh(speed / vel_std)`` is included so the reward is
+    only paid when the cube is actually settling onto the target. This removes the
+    "loosely jiggle the gripper open to harvest partial reward" pathology that produces
+    visible jitter while the cube is still being held/oscillated.
+
+    Reward = lifted * proximity * upright * stable * gripper_openness, in [0, 1].
     """
     white: RigidObject = env.scene[object_cfg.name]
     green: RigidObject = env.scene[green_cube_cfg.name]
@@ -96,9 +102,13 @@ def gripper_open_at_goal(
     proximity = 1 - torch.tanh(dist / std)
     lifted = (white.data.root_pos_w[:, 2] > minimal_height).float()
     upright = object_uprightness(env, object_cfg=object_cfg)
+    speed = torch.norm(white.data.root_lin_vel_w, dim=1)
+    stable = 1 - torch.tanh(speed / vel_std)
 
     finger_ids, _ = robot.find_joints("panda_finger_joint.*")
     finger_pos = robot.data.joint_pos[:, finger_ids]
-    gripper_openness = torch.clamp(torch.mean(finger_pos, dim=1) / 0.04, 0.0, 1.0)
+    # Steeper openness: fingers below ~half-open count as "not released" so the policy
+    # cannot farm reward by cracking the gripper a few millimetres.
+    gripper_openness = torch.clamp((torch.mean(finger_pos, dim=1) - 0.02) / 0.02, 0.0, 1.0)
 
-    return lifted * proximity * upright * gripper_openness
+    return lifted * proximity * upright * stable * gripper_openness

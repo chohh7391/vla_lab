@@ -17,11 +17,19 @@ from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 import vla_lab.tasks.manager_based.base_line.pick_place.mdp as mdp
 from vla_lab.tasks.manager_based.base_line.lift.config.franka.joint_pos_env_cfg import FrankaCubeLiftEnvCfg
 
-# Green cube geometry (green_block.usd at scale=1.0)
+# Cube geometry — MEASURED from the simulator (cubes settled at rest), not guessed.
+# white = dex_cube_instanceable.usd @ scale 0.8 -> ~4.2 cm cube (half-height 0.021)
+# green = green_block.usd @ scale 1.0          -> ~4.06 cm cube (half-height 0.0203)
+# The previous _WHITE_HALF_HEIGHT = 0.055 was wrong by +0.034 m, which placed the goal
+# 3.4 cm ABOVE the real resting height. The policy then hovered the cube in mid-air and
+# every release dropped/tipped it -> catastrophic reward swing -> PPO collapse.
 _GREEN_HALF_HEIGHT = 0.0203
-_WHITE_HALF_HEIGHT = 0.055
-# White cube center z when stacked on green cube: 0.0203 + 0.0203 + 0.055 = 0.0956
-_PLACE_TARGET_Z = _GREEN_HALF_HEIGHT + _GREEN_HALF_HEIGHT + _WHITE_HALF_HEIGHT  # 0.0956
+_WHITE_HALF_HEIGHT = 0.021
+# White cube center z when stacked on green cube: 0.0203 + 0.0203 + 0.021 = 0.0616
+_PLACE_TARGET_Z = _GREEN_HALF_HEIGHT + _GREEN_HALF_HEIGHT + _WHITE_HALF_HEIGHT  # 0.0616
+# Lift gate: above table-rest (0.021) but below stacked height (0.0616) so the gate is
+# satisfied both while carrying and once correctly placed.
+_LIFT_GATE_HEIGHT = 0.04
 
 
 @configclass
@@ -77,33 +85,44 @@ class FrankaPickPlaceEnvCfg(FrankaCubeLiftEnvCfg):
             },
         )
 
-        # ── Rewards: tighten goal-tracking gate to prevent table-sliding ──────
-        # White cube rests at z = 0.055. Using minimal_height = 0.07 forces a
-        # real lift before the goal-tracking reward activates, while still
-        # allowing reward at the target (z = 0.0956 > 0.07).
-        self.rewards.object_goal_tracking.params["minimal_height"] = 0.07
-        self.rewards.object_goal_tracking_fine_grained.params["minimal_height"] = 0.07
+        # ── Rewards: gate goal-tracking on a real lift to prevent table-sliding ──
+        # White rests on the table at z = 0.021 and stacks at z = 0.0616, so the gate
+        # must sit between them. 0.04 forces the cube off the table before goal-tracking
+        # pays, yet still pays once correctly placed (0.0616 > 0.04). The previous 0.07
+        # was ABOVE the real stacked height -> a correct placement scored nothing.
+        self.rewards.object_goal_tracking.params["minimal_height"] = _LIFT_GATE_HEIGHT
+        self.rewards.object_goal_tracking_fine_grained.params["minimal_height"] = _LIFT_GATE_HEIGHT
 
         # Continuous release guidance: gradient toward opening gripper near target.
         # std=0.08 limits effective range to ~15 cm so carry-phase grasping is unaffected.
-        # At hover 5 cm above target (dist≈0.054): proximity≈0.41 → ~4/step signal.
-        # At carry 20 cm from target: proximity≈0.02 → negligible (no interference).
+        # A velocity gate inside the reward means it only pays once the cube is actually
+        # settling on the target, which suppresses the open/close jitter.
         self.rewards.gripper_open_at_goal = RewTerm(
             func=mdp.gripper_open_at_goal,
             params={
                 "std": 0.08,
-                "minimal_height": 0.07,
+                "minimal_height": _LIFT_GATE_HEIGHT,
+                "vel_std": 0.1,
                 "green_half_height": _GREEN_HALF_HEIGHT,
                 "white_half_height": _WHITE_HALF_HEIGHT,
             },
             weight=10.0,
         )
 
-        # Binary place bonus: cube at stacking position AND gripper open
+        # NOTE: the earlier negative "holding_closed_at_goal" penalty was removed. With the
+        # corrected target height a release now actually succeeds, so positive shaping
+        # (gripper_open_at_goal + place_bonus) plus the removed success-termination already
+        # make "release" the higher-value behaviour. Negative shaping at the release
+        # subgoal mainly added variance and accelerated the collapse, so it is not needed.
+
+        # Binary place bonus: cube at stacking position AND gripper open. threshold=0.045
+        # gives the policy a real "landing zone" instead of a knife-edge target: 0.03 was so
+        # tight that a slightly off-center (but genuinely stacked) cube fell outside it, so
+        # the policy kept micro-nudging the cube to chase the bonus -> the jitter you saw.
         self.rewards.place_bonus = RewTerm(
             func=mdp.object_placed_at_goal,
             params={
-                "threshold": 0.05,
+                "threshold": 0.045,
                 "upright_error_threshold": 0.35,
                 "open_threshold": 0.035,
                 "green_half_height": _GREEN_HALF_HEIGHT,
@@ -119,12 +138,27 @@ class FrankaPickPlaceEnvCfg(FrankaCubeLiftEnvCfg):
             func=mdp.green_cube_position_in_robot_root_frame
         )
 
-        # ── Terminations: success when cube placed stably, gripper open ───────
+        # ── Terminations: end the episode once the cube is placed and settled ──
+        # IMPORTANT: registered with time_out=True on purpose. A *hard* terminal
+        # (time_out=False) zeroes the value bootstrap, so "finishing" would destroy the
+        # remaining per-step reward stream (~37/step held closed -> ~1850 with gamma=0.98)
+        # and the agent would relearn to never release (the original bug). Flagging it as a
+        # truncation makes RSL-RL bootstrap the value at the success state, so terminating
+        # is NOT seen as a loss. The agent still prefers to place because the placed-open
+        # state simply pays more per step (place_bonus + gripper_open_at_goal) than holding
+        # closed, and on success the episode resets. This gives clean place->reset episodes
+        # without the don't-release pathology.
+        #
+        # Tolerances loosened to match a real placement: threshold 0.03 -> 0.045 (same landing
+        # zone as place_bonus) and vel_threshold 0.05 -> 0.15. The old 5 cm/s was stricter than
+        # the residual wobble a hovering arm imparts on the cube, so "settled" never latched and
+        # the episode never ended. 0.15 m/s still requires the cube to be essentially at rest.
         self.terminations.task_success = DoneTerm(
             func=mdp.object_placed_success,
+            time_out=True,
             params={
-                "threshold": 0.05,
-                "vel_threshold": 0.05,
+                "threshold": 0.045,
+                "vel_threshold": 0.15,
                 "upright_error_threshold": 0.35,
                 "open_threshold": 0.035,
                 "green_half_height": _GREEN_HALF_HEIGHT,

@@ -33,7 +33,7 @@ def object_placed_success(
     green_cube_cfg: SceneEntityCfg = SceneEntityCfg("green_cube"),
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
     green_half_height: float = 0.0203,
-    white_half_height: float = 0.055,
+    white_half_height: float = 0.021,
 ) -> torch.Tensor:
     """Terminate successfully when the white cube is stably placed on the green cube with the gripper open."""
     white: RigidObject = env.scene[object_cfg.name]
